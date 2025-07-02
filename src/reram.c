@@ -124,8 +124,7 @@ bool rr_wrsr(int fd, uint8_t value) {
 }
 
 bool rr_read(int fd, uint32_t address, uint8_t *value) {
-   uint8_t tx_buffer[5] = {0x03, 
-      (address & 0xFF000000) >> 24,
+   uint8_t tx_buffer[4] = {0x03, 
       (address & 0x00FF0000) >> 16,
       (address & 0x0000FF00) >> 8,
       (address & 0x000000FF)
@@ -151,8 +150,7 @@ bool rr_read(int fd, uint32_t address, uint8_t *value) {
 }
 
 bool rr_write(int fd, uint32_t address, uint8_t value) {
-   uint8_t tx_buffer[6] = {0x02, 
-      (address & 0xFF000000) >> 24,
+   uint8_t tx_buffer[5] = {0x02, 
       (address & 0x00FF0000) >> 16,
       (address & 0x0000FF00) >> 8,
       (address & 0x000000FF),
@@ -174,8 +172,7 @@ bool rr_write(int fd, uint32_t address, uint8_t value) {
 }
 
 bool rr_read_buffer(int fd, uint32_t address, uint8_t *buf, int bufsize) {
-   uint8_t tx_buffer[5] = {0x03, 
-      (address & 0xFF000000) >> 24,
+   uint8_t tx_buffer[4] = {0x03, 
       (address & 0x00FF0000) >> 16,
       (address & 0x0000FF00) >> 8,
       (address & 0x000000FF)
@@ -201,8 +198,7 @@ bool rr_read_buffer(int fd, uint32_t address, uint8_t *buf, int bufsize) {
 }
 
 bool rr_write_buffer(int fd, uint32_t address, uint8_t *buf, int bufsize) {
-   uint8_t tx_buffer[6] = {0x02, 
-      (address & 0xFF000000) >> 24,
+   uint8_t tx_buffer[5] = {0x02, 
       (address & 0x00FF0000) >> 16,
       (address & 0x0000FF00) >> 8,
       (address & 0x000000FF),
