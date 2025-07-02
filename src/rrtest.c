@@ -5,7 +5,6 @@
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
 #include <string.h>
-
 #include "reram.h"
 
 #define SPI_DEVICE "/dev/spidev0.0"
@@ -18,6 +17,10 @@ int main(void) {
    int fd, ret;
    uint8_t sr_value;
    uint8_t sr;
+   uint32_t m_address;
+   uint8_t m_value;
+
+   uint8_t memory[256];
 
    // setup SPI device
    fd = open(SPI_DEVICE, O_RDWR);
@@ -157,6 +160,117 @@ int main(void) {
 
    printf("\n\n");
    
+   // READ
+   printf("READ memory address 0x0\n");
+   m_address = 0x0;
+   if(!rr_read(fd, m_address, &m_value)) {
+      perror("rr_read error");
+      close(fd);
+      return -1;
+   }
+   printf("RX data:\n");
+   printf("0x%02X\n", m_value); 
+   
+   // WREN
+   printf("SET Write Enable Latch (0x06)\n");
+   if(!rr_wren(fd)) {
+      perror("rr_wren error");
+      close(fd);
+      return -1; 
+   }
+
+   // WRITE
+   printf("WRITE memory address 0x0 value 0x48\n");
+   m_address = 0x0;
+   m_value = 0x48;
+   if(!rr_write(fd, m_address, m_value)) {
+      perror("rr_write error");
+      close(fd);
+      return -1;
+   }
+   sleep(1);
+
+   // WRDI
+   printf("RESET Write Enable Latch (0x04)\n");
+   if(!rr_wrdi(fd)) {
+      perror("rr_wrdi error");
+      close(fd);
+      return -1; 
+   }
+
+   // READ
+   printf("READ memory address 0x0\n");
+   m_address = 0x0;
+   if(!rr_read(fd, m_address, &m_value)) {
+      perror("rr_read error");
+      close(fd);
+      return -1;
+   }
+   printf("RX data:\n");
+   printf("0x%02X\n", m_value); 
+
+   printf("\n\n");
+
+   // READ with auto-increment
+   printf("READ memory with auto-increment\n");
+   if(!rr_read_buffer(fd, m_address, memory, sizeof(memory))) {
+      perror("rr_read_buffer error");
+      close(fd);
+      return -1;
+   }
+
+   for(int i=0;i<sizeof(memory);i++) {
+      if(i>0 && i%8 == 0)
+         printf("\n");
+      printf("0x%02X ", memory[i]);
+   }
+
+   printf("\n\n");
+
+   // WREN
+   printf("SET Write Enable Latch (0x06)\n");
+   if(!rr_wren(fd)) {
+      perror("rr_wren error");
+      close(fd);
+      return -1; 
+   }
+
+   // WRITE
+   printf("WRITE memory with auto-increment\n");
+   uint8_t wbuf[6] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+   if(!rr_write_buffer(fd, m_address, wbuf, sizeof(wbuf))) {
+      perror("rr_write error");
+      close(fd);
+      return -1;
+   }
+   sleep(1);
+
+   // WRDI
+   printf("RESET Write Enable Latch (0x04)\n");
+   if(!rr_wrdi(fd)) {
+      perror("rr_wrdi error");
+      close(fd);
+      return -1; 
+   }
+
+   printf("\n\n");
+
+   // READ with auto-increment
+   printf("READ memory with auto-increment\n");
+   if(!rr_read_buffer(fd, m_address, memory, sizeof(memory))) {
+      perror("rr_read_buffer error");
+      close(fd);
+      return -1;
+   }
+
+   for(int i=0;i<sizeof(memory);i++) {
+      if(i>0 && i%8 == 0)
+         printf("\n");
+      printf("0x%02X ", memory[i]);
+   }
+
+   printf("\n\n");
+
    close(fd);
    return 0;
 }

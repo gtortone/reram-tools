@@ -123,10 +123,108 @@ bool rr_wrsr(int fd, uint8_t value) {
    return true;
 }
 
-uint8_t rr_read(int fd, uint32_t address) {
-   return 0;
+bool rr_read(int fd, uint32_t address, uint8_t *value) {
+   uint8_t tx_buffer[5] = {0x03, 
+      (address & 0xFF000000) >> 24,
+      (address & 0x00FF0000) >> 16,
+      (address & 0x0000FF00) >> 8,
+      (address & 0x000000FF)
+   };
+   struct spi_ioc_transfer tr[2];
+
+   memset(&tr, 0, sizeof(tr));
+   tr[0].tx_buf = (unsigned long)&tx_buffer;
+   tr[0].rx_buf = (unsigned long)NULL;
+   tr[0].len = sizeof(tx_buffer);
+   tr[0].delay_usecs = 0;
+   tr[0].cs_change = 0;
+   
+   tr[1].tx_buf = (unsigned long)NULL;
+   tr[1].rx_buf = (unsigned long)value;
+   tr[1].len = 1;
+   tr[1].delay_usecs = 0;
+
+   if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) < -1)
+      return false;
+
+   return true;
 }
 
 bool rr_write(int fd, uint32_t address, uint8_t value) {
+   uint8_t tx_buffer[6] = {0x02, 
+      (address & 0xFF000000) >> 24,
+      (address & 0x00FF0000) >> 16,
+      (address & 0x0000FF00) >> 8,
+      (address & 0x000000FF),
+      value
+   };
+   struct spi_ioc_transfer tr[1];
+
+   memset(&tr, 0, sizeof(tr));
+   tr[0].tx_buf = (unsigned long)&tx_buffer;
+   tr[0].rx_buf = (unsigned long)NULL;
+   tr[0].len = sizeof(tx_buffer);
+   tr[0].delay_usecs = 0;
+   tr[0].cs_change = 0;
+   
+   if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) < -1)
+      return false;
+
    return true;
+}
+
+bool rr_read_buffer(int fd, uint32_t address, uint8_t *buf, int bufsize) {
+   uint8_t tx_buffer[5] = {0x03, 
+      (address & 0xFF000000) >> 24,
+      (address & 0x00FF0000) >> 16,
+      (address & 0x0000FF00) >> 8,
+      (address & 0x000000FF)
+   };
+   struct spi_ioc_transfer tr[2];
+
+   memset(&tr, 0, sizeof(tr));
+   tr[0].tx_buf = (unsigned long)&tx_buffer;
+   tr[0].rx_buf = (unsigned long)NULL;
+   tr[0].len = sizeof(tx_buffer);
+   tr[0].delay_usecs = 0;
+   tr[0].cs_change = 0;
+   
+   tr[1].tx_buf = (unsigned long)NULL;
+   tr[1].rx_buf = (unsigned long)buf;
+   tr[1].len = bufsize;
+   tr[1].delay_usecs = 0;
+
+   if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) < -1)
+      return false;
+
+   return true;
+}
+
+bool rr_write_buffer(int fd, uint32_t address, uint8_t *buf, int bufsize) {
+   uint8_t tx_buffer[6] = {0x02, 
+      (address & 0xFF000000) >> 24,
+      (address & 0x00FF0000) >> 16,
+      (address & 0x0000FF00) >> 8,
+      (address & 0x000000FF),
+      buf[0]
+   };
+   struct spi_ioc_transfer tr[2];
+
+   memset(&tr, 0, sizeof(tr));
+   tr[0].tx_buf = (unsigned long)&tx_buffer;
+   tr[0].rx_buf = (unsigned long)NULL;
+   tr[0].len = sizeof(tx_buffer);
+   tr[0].delay_usecs = 0;
+   tr[0].cs_change = 0;
+
+   tr[1].tx_buf = (unsigned long)buf+1;
+   tr[1].rx_buf = (unsigned long)NULL;
+   tr[1].len = bufsize;
+   tr[1].delay_usecs = 0;
+   
+   if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) < -1)
+      return false;
+
+   return true;
+
 }
