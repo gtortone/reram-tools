@@ -12,6 +12,14 @@
 #define SPI_MODE  (SPI_MODE_0 | SPI_3WIRE)
 #define SPI_BITS_PER_WORD 8
 
+//#define RERAM_SIZE	1024
+//#define RERAM_OFFSET	0
+//
+#define RERAM_SIZE	1572864
+#define RERAM_OFFSET	0
+//
+#define BYTE			0xFF
+
 int main(void) {
 
    int fd, ret;
@@ -20,7 +28,7 @@ int main(void) {
    uint32_t m_address;
    uint8_t m_value;
 
-   uint8_t memory[256];
+   uint8_t memory[158];
 
    // setup SPI device
    fd = open(SPI_DEVICE, O_RDWR);
@@ -94,14 +102,6 @@ int main(void) {
    printf("RX data:\n");
    printf("0x%02X\n", sr);
 
-   // WREN
-   printf("SET Write Enable Latch (0x06)\n");
-   if(!rr_wren(fd)) {
-      perror("rr_wren error");
-      close(fd);
-      return -1; 
-   }
-
    // WRSR
    sr_value = 0xE0;
    printf("WRSR command (0x01) value 0x%02X\n", sr_value);
@@ -110,7 +110,6 @@ int main(void) {
       close(fd);
       return -1; 
    }
-   sleep(1);
 
    // RDSR
    printf("RDSR command (0x05)\n");
@@ -121,14 +120,6 @@ int main(void) {
    }
    printf("RX data:\n");
    printf("0x%02X\n", sr);
-
-   // WREN
-   printf("SET Write Enable Latch (0x06)\n");
-   if(!rr_wren(fd)) {
-      perror("rr_wren error");
-      close(fd);
-      return -1; 
-   }
 
    // WRSR
    sr_value = 0x00;
@@ -138,7 +129,6 @@ int main(void) {
       close(fd);
       return -1; 
    }
-   sleep(1);
 
    // RDSR
    printf("RDSR command (0x05)\n");
@@ -150,14 +140,6 @@ int main(void) {
    printf("RX data:\n");
    printf("0x%02X\n", sr);
 
-   // WRDI
-   printf("RESET Write Enable Latch (0x04)\n");
-   if(!rr_wrdi(fd)) {
-      perror("rr_wrdi error");
-      close(fd);
-      return -1; 
-   }
-
    printf("\n\n");
    
    // READ
@@ -171,14 +153,6 @@ int main(void) {
    printf("RX data:\n");
    printf("0x%02X\n", m_value); 
    
-   // WREN
-   printf("SET Write Enable Latch (0x06)\n");
-   if(!rr_wren(fd)) {
-      perror("rr_wren error");
-      close(fd);
-      return -1; 
-   }
-
    // WRITE
    printf("WRITE memory address 0x0 value 0x48\n");
    m_address = 0x0;
@@ -188,15 +162,6 @@ int main(void) {
       close(fd);
       return -1;
    }
-   sleep(1);
-
-   // WRDI
-   printf("RESET Write Enable Latch (0x04)\n");
-   if(!rr_wrdi(fd)) {
-      perror("rr_wrdi error");
-      close(fd);
-      return -1; 
-   }
 
    // READ
    printf("READ memory address 0x0\n");
@@ -227,30 +192,13 @@ int main(void) {
 
    printf("\n\n");
 
-   // WREN
-   printf("SET Write Enable Latch (0x06)\n");
-   if(!rr_wren(fd)) {
-      perror("rr_wren error");
-      close(fd);
-      return -1; 
-   }
-
    // WRITE
    printf("WRITE memory with auto-increment\n");
    uint8_t wbuf[6] = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
    if(!rr_write_buffer(fd, m_address, wbuf, sizeof(wbuf))) {
-      perror("rr_write error");
+      perror("rr_write_buffer error");
       close(fd);
       return -1;
-   }
-   sleep(1);
-
-   // WRDI
-   printf("RESET Write Enable Latch (0x04)\n");
-   if(!rr_wrdi(fd)) {
-      perror("rr_wrdi error");
-      close(fd);
-      return -1; 
    }
 
    printf("\n\n");
@@ -268,6 +216,79 @@ int main(void) {
          printf("\n");
       printf("0x%02X ", memory[i]);
    }
+
+   printf("\n\n");
+
+   // RDSR
+   printf("RDSR command (0x05)\n");
+   if(!rr_rdsr(fd, &sr)) {
+      perror("rr_rdsr error");
+      close(fd);
+      return -1; 
+   }
+   printf("RX data:\n");
+   printf("0x%02X\n", sr);
+
+   printf("\n\n");
+
+	int size = RERAM_SIZE;
+	uint8_t *array_ff = (uint8_t *) malloc(size);
+
+	for(int i=0;i<size;i++) {
+		//array_ff[i] = i%0x100;
+		array_ff[i] = BYTE;
+		//printf("array_ff[%d]: 0x%02X\n", i, array_ff[i]);
+	}
+
+	// FILL memory
+	printf("FILL memory with 0x00-0xFF starting at offset %d\n", RERAM_OFFSET);
+	//printf("FILL memory with %d starting at offset %d\n", BYTE, RERAM_OFFSET);
+   if(!rr_write_buffer(fd, RERAM_OFFSET, array_ff, size)) {
+      perror("rr_write_buffer error");
+      close(fd);
+      return -1;
+   }
+
+	uint8_t *reram = (uint8_t *) malloc(RERAM_SIZE);
+	memset(reram, 0, RERAM_SIZE);
+
+   // RDSR
+   printf("RDSR command (0x05)\n");
+   if(!rr_rdsr(fd, &sr)) {
+      perror("rr_rdsr error");
+      close(fd);
+      return -1; 
+   }
+   printf("RX data:\n");
+   printf("0x%02X\n", sr);
+
+   printf("\n\n");
+
+   // READ with auto-increment
+   printf("READ memory with auto-increment\n");
+   if(!rr_read_buffer(fd, 0, reram, RERAM_SIZE)) {
+      perror("rr_read_buffer error");
+      close(fd);
+      return -1;
+   }
+
+   for(int i=0;i<RERAM_SIZE;i++) {
+      if(i>0 && i%8 == 0)
+         printf("\n");
+      printf("0x%02X ", reram[i]);
+   }
+
+   printf("\n\n");
+
+   // RDSR
+   printf("RDSR command (0x05)\n");
+   if(!rr_rdsr(fd, &sr)) {
+      perror("rr_rdsr error");
+      close(fd);
+      return -1; 
+   }
+   printf("RX data:\n");
+   printf("0x%02X\n", sr);
 
    printf("\n\n");
 

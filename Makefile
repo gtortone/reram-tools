@@ -1,49 +1,40 @@
-# Target
-BIN_DIR = bin
-BIN = $(BIN_DIR)/reram_test
-
-# Match all sources in src direcotry
-SRCS_DIR = src
-SRCS = $(wildcard $(SRCS_DIR)/**/*.c $(SRCS_DIR)/*.c)
-
-# Builds object list from sources, substitues .c for .o
-OBJS_DIR = obj
-OBJS = $(patsubst $(SRCS_DIR)/%.c,$(OBJS_DIR)/%.o,$(SRCS))
+CC=gcc
 
 # Include headers files
 INCLUDE_DIRS = include
 INCLUDE = $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
 
-# Search libraries in following directories
-INCLUDE_LIB_DIRS = 
-INCLUDE_LIB = $(foreach includedir,$(INCLUDE_LIB_DIRS),-L$(includedir))
+CFLAGS = -Wall -O3 -Wno-unused-result
+LDFLAGS = -O3 -L/usr/lib
 
-# Set compiler, preprocesor and linker flags
-CPPFLAGS += -O3 -Wall -Wno-unused-result
-LDFLAGS += $(INCLUDE_LIB)
+all: bin/rrtest bin/rrcycle
+
+OBJS_DIR = obj
+
+SRC_TEST=src/rrtest.c src/reram.c
+OBJ_TEST=$(SRC_TEST:.c=.o)
+
+SRC_CYCLE=src/rrcycle.c src/reram.c
+OBJ_CYCLE=$(SRC_CYCLE:.c=.o)
 
 # use DEBUG=1 to include debugging
 ifdef DEBUG
-  CLAGS += -g	
+  CFLAGS += -g	
 endif
 
-# Set other tools
 MKDIR = mkdir -p
 
-# Avoid filename conflicts
-.PHONY: all clean
+bin/rrtest: $(OBJ_TEST)
+	@$(MKDIR) bin
+	$(CC) -o $@ $(CFLAGS) -I$(INCLUDE_DIRS) $(LDFLAGS) $^
 
-# Rules
-all: $(BIN)
+bin/rrcycle: $(OBJ_CYCLE)
+	@$(MKDIR) bin
+	$(CC) -o $@ $(CFLAGS) -I$(INCLUDE_DIRS) $(LDFLAGS) $^
 
-$(OBJS_DIR)/%.o: $(SRCS_DIR)/%.c
-	@$(MKDIR) $(dir $@)
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIRS) -c $< -o $@
-
-$(BIN): $(OBJS)
-	@$(MKDIR) $(dir $@)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+%.o: %.c
+	$(CC) -c -o $@ -I$(INCLUDE_DIRS) $(CFLAGS)  $^
 
 clean:
-	@$(RM) $(BIN)
-	@$(RM) $(OBJS)
+	rm -rf $(OBJ_TEST) $(OBJ_CYCLE) 
+	rm -rf bin/rrtest bin/rrcycle 
