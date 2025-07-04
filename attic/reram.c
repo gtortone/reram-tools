@@ -1,10 +1,10 @@
 #include <stdio.h>	// printf
 #include <string.h>  // memset
+#include <unistd.h>	// sleep
 #include "reram.h"
 
 // from /sys/module/spidev/parameters/bufsiz
-//#define SPIDEV_BUFSIZE	131072
-#define SPIDEV_BUFSIZE	1024
+#define SPIDEV_BUFSIZE	131072
 
 bool rr_rdid(int fd, uint8_t *buf, int *bufsize) {
    uint8_t tx_buffer = 0x9F;
@@ -325,7 +325,7 @@ bool rr_write_buffer(int fd, uint32_t offset, uint8_t *buf, int bufsize) {
 			return false;
 
 		while(rr_wip(fd))
-			;
+			sleep(0.1);
 
 		m_address += 256;
 		b_address += 256;

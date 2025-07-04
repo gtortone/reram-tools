@@ -5,6 +5,7 @@
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
 #include <string.h>
+#include <time.h>
 #include "reram.h"
 
 #define SPI_DEVICE "/dev/spidev0.0"
@@ -18,7 +19,7 @@
 #define RERAM_SIZE	1572864
 #define RERAM_OFFSET	0
 //
-#define BYTE			0xFF
+#define BYTE			0x55
 
 int main(void) {
 
@@ -29,6 +30,8 @@ int main(void) {
    uint8_t m_value;
 
    uint8_t memory[158];
+	clock_t t;
+	double time_elapsed;
 
    // setup SPI device
    fd = open(SPI_DEVICE, O_RDWR);
@@ -241,13 +244,18 @@ int main(void) {
 	}
 
 	// FILL memory
-	printf("FILL memory with 0x00-0xFF starting at offset %d\n", RERAM_OFFSET);
-	//printf("FILL memory with %d starting at offset %d\n", BYTE, RERAM_OFFSET);
+	//printf("FILL memory with 0x00-0xFF starting at offset %d\n", RERAM_OFFSET);
+	printf("FILL memory with %d starting at offset %d\n", BYTE, RERAM_OFFSET);
+	t = clock();
    if(!rr_write_buffer(fd, RERAM_OFFSET, array_ff, size)) {
       perror("rr_write_buffer error");
       close(fd);
       return -1;
    }
+	t = clock() - t;
+	time_elapsed = ((double)t)/CLOCKS_PER_SEC;
+
+	printf("time elapsed: %fs\n", time_elapsed);
 
 	uint8_t *reram = (uint8_t *) malloc(RERAM_SIZE);
 	memset(reram, 0, RERAM_SIZE);
