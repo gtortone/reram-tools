@@ -29,6 +29,8 @@ public:
 		uint32_t value:32;
 	} DeviceId;
 
+	const uint32_t size = 1572864;
+
 	MB85AS12MT(const int bus, const int cs, const int speed);
 	~MB85AS12MT(void);
 
@@ -53,10 +55,11 @@ public:
 	std::vector<uint8_t> readBuffer(uint32_t offset, uint32_t nb);
 	void writeBuffer(uint32_t offset, std::vector<uint8_t> buffer);
 
+	void dump(uint32_t start, uint32_t end);
+
 private:
 	int fd;
 	uint32_t spidev_bufsize;
-
 };
 
 #endif

@@ -452,3 +452,24 @@ void MB85AS12MT::writeBuffer(uint32_t offset, std::vector<uint8_t> buffer) {
 
 	writeBuffer(offset, buffer.data(), buffer.size());
 }
+
+void MB85AS12MT::dump(uint32_t start, uint32_t end) {
+
+	std::vector<uint8_t> data = readBuffer(start, end-start+1);
+
+	for(unsigned int i=0; i<data.size(); i++) {
+		if(i%16 == 0) {
+			printf("%06X-%06X: ", 
+				i+start, (i+15)<data.size()-1?i+start+15:data.size()-1);
+			printf("%02X ", data[i]);
+		} else {
+			printf("%02X ", data[i]);
+			if((i+1) % 16 == 0 && i+1 < data.size())
+				printf("\n");
+			else if((i+1) % 8 == 0 && i+1 < data.size())
+				printf(". ");
+		}
+	}
+	printf("\n");
+
+}

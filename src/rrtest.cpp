@@ -1,4 +1,4 @@
-#include <iostream>
+#include <iostream> 
 #include <vector>
 #include "mb85as12mt.h"
 
@@ -43,7 +43,7 @@ int main(void) {
 
 	std::vector<uint8_t> data;
 
-	printf("-- read address 0-15 inside 'data' buffer\n");
+	printf("-- fetch address 0-15 inside 'data' buffer\n");
 	data = rr->readBuffer(0, 16);
 
 	for(unsigned int i=0;i<data.size();i++)
@@ -59,12 +59,15 @@ int main(void) {
 	rr->writeBuffer(4, data);
 	printf("\n\n");
 
-	printf("-- read address 0-31 inside 'data' buffer\n");
+	printf("-- fetch address 0-31 inside 'data' buffer\n");
 	data = rr->readBuffer(0, 32);
 
 	for(unsigned int i=0;i<data.size();i++)
 		printf("data[%d]: 0x%02X\n", i, data[i]);
 	printf("\n\n");
+
+	printf("-- dump address 0-1023\n");
+	rr->dump(0, 1023);
 
 	return 0;
 }
