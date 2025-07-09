@@ -9,20 +9,20 @@
 
 int main(int argc, const char **argv) {
 
-	std::string toolname(std::filesystem::path(argv[0]).filename().u8string());
+   std::string toolname(std::filesystem::path(argv[0]).filename().u8string());
    std::string s = toolname + " [options]";
    const char *spiconf = "0.0";
    int freq = 1;  // 1 MHz
-	// rdump
-	unsigned int dump_start = 0;
-	unsigned int dump_end = 255;
-	unsigned int dump_full = 0;
-	// rrfill
-	unsigned int fill_byte = 0x00;
-	unsigned int fill_proceed = 0;
-	// rrread
-	unsigned int read_addr = 0x00;
-	unsigned int read_nbytes = 1;
+   // rdump
+   unsigned int dump_start = 0;
+   unsigned int dump_end = 255;
+   unsigned int dump_full = 0;
+   // rrfill
+   unsigned int fill_byte = 0x00;
+   unsigned int fill_proceed = 0;
+   // rrread
+   unsigned int read_addr = 0x00;
+   unsigned int read_nbytes = 1;
    // rrwrite
    unsigned int write_addr = 0x00;
    unsigned int write_byte = 0x00;
@@ -56,32 +56,32 @@ int main(int argc, const char **argv) {
       }
    }
 
-	// add options for different tools
-	if (toolname == "rrdump") {
+   // add options for different tools
+   if (toolname == "rrdump") {
 
-		options.push_back(OPT_INTEGER(0, "start", &dump_start, "start address to dump (default: 0)", NULL, 0, 0));
-		options.push_back(OPT_INTEGER(0, "end", &dump_end, "end address to dump (default: 256)", NULL, 0, 0));
-		options.push_back(OPT_BOOLEAN('f', "full", &dump_full, "full dump", NULL, 0, 0));
+      options.push_back(OPT_INTEGER(0, "start", &dump_start, "start address to dump (default: 0)", NULL, 0, 0));
+      options.push_back(OPT_INTEGER(0, "end", &dump_end, "end address to dump (default: 256)", NULL, 0, 0));
+      options.push_back(OPT_BOOLEAN('f', "full", &dump_full, "full dump", NULL, 0, 0));
       options.push_back(OPT_END());
 
-	} else if (toolname == "rrfill") {
+   } else if (toolname == "rrfill") {
 
-		options.push_back(OPT_INTEGER('c', "byte", &fill_byte, "byte to fill whole memory (default: 0)", NULL, 0, 0));
-		options.push_back(OPT_BOOLEAN('y', "yes", &fill_proceed, "do not ask confirmation", NULL, 0, 0));
+      options.push_back(OPT_INTEGER('c', "byte", &fill_byte, "byte to fill whole memory (default: 0)", NULL, 0, 0));
+      options.push_back(OPT_BOOLEAN('y', "yes", &fill_proceed, "do not ask confirmation", NULL, 0, 0));
       options.push_back(OPT_END());
 
-	} else if (toolname == "rrread") {
+   } else if (toolname == "rrread") {
 
-		options.push_back(OPT_INTEGER('a', "addr", &read_addr, "address to read (default: 0)", NULL, 0, 0));
-		options.push_back(OPT_INTEGER('n', "nb", &read_nbytes, "number of bytes to read (default: 1)", NULL, 0, 0));
+      options.push_back(OPT_INTEGER('a', "addr", &read_addr, "address to read (default: 0)", NULL, 0, 0));
+      options.push_back(OPT_INTEGER('n', "nb", &read_nbytes, "number of bytes to read (default: 1)", NULL, 0, 0));
 
-	} else if (toolname == "rrwrite") {
+   } else if (toolname == "rrwrite") {
 
-		options.push_back(OPT_INTEGER('a', "addr", &write_addr, "address to write (default: 0)", NULL, 0, 0));
-		options.push_back(OPT_INTEGER('c', "byte", &write_byte, "byte to write (default: 0)", NULL, 0, 0));
-		options.push_back(OPT_BOOLEAN('y', "yes", &write_proceed, "do not ask confirmation", NULL, 0, 0));
+      options.push_back(OPT_INTEGER('a', "addr", &write_addr, "address to write (default: 0)", NULL, 0, 0));
+      options.push_back(OPT_INTEGER('c', "byte", &write_byte, "byte to write (default: 0)", NULL, 0, 0));
+      options.push_back(OPT_BOOLEAN('y', "yes", &write_proceed, "do not ask confirmation", NULL, 0, 0));
 
-	}
+   }
 
    struct argparse argparse;
    argparse_init(&argparse, options.data(), usage, 0);
