@@ -4,6 +4,7 @@
 #include <sstream>
 #include <chrono>
 #include "argparse.h"
+#include "utils.h"
 #include "mb85as12mt.h"
 
 int main(int argc, const char **argv) {
@@ -15,7 +16,13 @@ int main(int argc, const char **argv) {
 	// rdump
 	unsigned int dump_start = 0;
 	unsigned int dump_end = 255;
-	bool dump_full = false;
+	unsigned int dump_full = 0;
+	// rrfill
+	unsigned int fill_byte = 0x00;
+	unsigned int fill_proceed = 0;
+	// rrread
+	unsigned int read_addr = 0x00;
+	unsigned int read_nbytes = 1;
 
    static const char *const usage[] = {
       s.c_str(),
@@ -25,15 +32,30 @@ int main(int argc, const char **argv) {
    std::vector<struct argparse_option> options = {
       OPT_HELP(),
       OPT_STRING('b', "spi", &spiconf, "SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)", NULL, 0, 0),
-      OPT_INTEGER('s', "freq", &freq, "SPI clock frequency in MHz (default: 1 - 1 MHz)"),
+      OPT_INTEGER('s', "freq", &freq, "SPI clock frequency in MHz (default: 1 - 1 MHz)", NULL, 0, 0),
    };
 
 	// add options for different tools
 	if (toolname == "rrdump") {
-		options.push_back(OPT_INTEGER('s', "start", &dump_start, "start address to dump (default: 0)"));
-		options.push_back(OPT_INTEGER('e', "end", &dump_end, "end address to dump (default: 256)"));
-		options.push_back(OPT_BOOLEAN('f', "full", &dump_full, "full dump"));
+
+		options.push_back(OPT_INTEGER(0, "start", &dump_start, "start address to dump (default: 0)", NULL, 0, 0));
+		options.push_back(OPT_INTEGER(0, "end", &dump_end, "end address to dump (default: 256)", NULL, 0, 0));
+		options.push_back(OPT_BOOLEAN('f', "full", &dump_full, "full dump", NULL, 0, 0));
       options.push_back(OPT_END());
+
+	} else if (toolname == "rrfill") {
+
+		options.push_back(OPT_INTEGER('c', "byte", &fill_byte, "byte to fill whole memory (default: 0)", NULL, 0, 0));
+		options.push_back(OPT_BOOLEAN('y', "yes", &fill_proceed, "do not ask confirmation", NULL, 0, 0));
+      options.push_back(OPT_END());
+
+	} else if (toolname == "rrread") {
+
+		options.push_back(OPT_INTEGER('a', "addr", &read_addr, "address to read (default: 0)", NULL, 0, 0));
+		options.push_back(OPT_INTEGER('n', "nb", &read_nbytes, "number of bytes to read (default: 1)", NULL, 0, 0));
+
+	} else if (toolname == "rrwrite") {
+
 	}
 
    struct argparse argparse;
@@ -72,22 +94,56 @@ int main(int argc, const char **argv) {
 		std::vector<uint8_t> data = rr->readBuffer(dump_start, dump_end-dump_start+1);		
 		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-		for(unsigned int i=0; i<data.size(); i++) {
-			if(i%16 == 0) {
-				printf("%06X-%06X: ",
-					i+dump_start, (i+15)<data.size()-1?i+dump_start+15:data.size()-1);
-				printf("%02X ", data[i]);
-			} else {
-				printf("%02X ", data[i]);
-				if((i+1) % 16 == 0 && i+1 < data.size())
-					printf("\n");
-				else if((i+1) % 8 == 0 && i+1 < data.size())
-					printf(". ");
-			}
-		}	
+		prettyPrint(data, dump_start);
 
 		printf("\n\ndump execution time: %lld ms\n\n", 
 			std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+
+	} else if(toolname == "rrinfo") {
+
+		rr->printInfo();
+
+	} else if(toolname == "rrfill") {
+
+		// ask confirmation
+
+		printf("> fill byte: 0x%X (%d)\n", fill_byte, fill_byte);
+		if (!fill_proceed) {
+			printf("\nAre you sure (y/n): ");
+			if (std::tolower(getchar()) == 'n')
+				return 0;
+		}
+		
+		printf("\nOperation in progress...\n");
+
+		std::vector<uint8_t> data(rr->size, fill_byte);
+
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+		rr->writeBuffer(0, data);			
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		printf("\nfill execution time: %lld ms\n\n", 
+			std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+
+	} else if(toolname == "rrread") {
+
+		printf("> read addr: 0x%X (%d), nbytes: %d\n\n", read_addr, read_addr, read_nbytes);			
+
+		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+		std::vector data = rr->readBuffer(read_addr, read_nbytes);
+		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+		prettyPrint(data, read_addr);
+
+		printf("\n\nread execution time: %lld ms\n\n", 
+			std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+		
+
+	} else if(toolname == "rrwrite") {
+
+	} else {
+		
+		printf("E: program '%s' not found\n", toolname.c_str());
 	}
 
 	return(0);
