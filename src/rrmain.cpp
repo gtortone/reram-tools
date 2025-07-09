@@ -80,71 +80,68 @@ int main(int argc, const char **argv) {
 
    rr = new MB85AS12MT(bus[0], bus[1], freq * 1000000);
 
-	printf("> SPI bus: %d, CS: %d, SCK: %d MHz\n", bus[0], bus[1], freq);
+   printf("> SPI bus: %d, CS: %d, SCK: %d MHz\n", bus[0], bus[1], freq); if(toolname == "rrdump") {
+   if (dump_full) {
+      dump_start = 0;
+      dump_end = rr->size-1;
+   }
+   printf("> dump start: 0x%X (%d), dump end: 0x%X (%d)\n\n", 
+      dump_start, dump_start, dump_end, dump_end);
+   
+   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+   std::vector<uint8_t> data = rr->readBuffer(dump_start, dump_end-dump_start+1);		
+   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-	if(toolname == "rrdump") {
-		if (dump_full) {
-			dump_start = 0;
-			dump_end = rr->size-1;
-		}
-		printf("> dump start: 0x%X (%d), dump end: 0x%X (%d)\n\n", 
-			dump_start, dump_start, dump_end, dump_end);
-		
-		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-		std::vector<uint8_t> data = rr->readBuffer(dump_start, dump_end-dump_start+1);		
-		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+   prettyPrint(data, dump_start);
 
-		prettyPrint(data, dump_start);
+   printf("\n\ndump execution time: %lld ms\n\n", 
+      std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 
-		printf("\n\ndump execution time: %lld ms\n\n", 
-			std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+   } else if(toolname == "rrinfo") {
 
-	} else if(toolname == "rrinfo") {
+      rr->printInfo();
 
-		rr->printInfo();
+   } else if(toolname == "rrfill") {
 
-	} else if(toolname == "rrfill") {
+      // ask confirmation
 
-		// ask confirmation
+      printf("> fill byte: 0x%X (%d)\n", fill_byte, fill_byte);
+      if (!fill_proceed) {
+         printf("\nAre you sure (y/n): ");
+         if (std::tolower(getchar()) == 'n')
+            return 0;
+      }
+      
+      printf("\nOperation in progress...\n");
 
-		printf("> fill byte: 0x%X (%d)\n", fill_byte, fill_byte);
-		if (!fill_proceed) {
-			printf("\nAre you sure (y/n): ");
-			if (std::tolower(getchar()) == 'n')
-				return 0;
-		}
-		
-		printf("\nOperation in progress...\n");
+      std::vector<uint8_t> data(rr->size, fill_byte);
 
-		std::vector<uint8_t> data(rr->size, fill_byte);
+      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+      rr->writeBuffer(0, data);			
+      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-		rr->writeBuffer(0, data);			
-		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+      printf("\nfill execution time: %lld ms\n\n", 
+         std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 
-		printf("\nfill execution time: %lld ms\n\n", 
-			std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+   } else if(toolname == "rrread") {
 
-	} else if(toolname == "rrread") {
+      printf("> read addr: 0x%X (%d), nbytes: %d\n\n", read_addr, read_addr, read_nbytes);			
 
-		printf("> read addr: 0x%X (%d), nbytes: %d\n\n", read_addr, read_addr, read_nbytes);			
+      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+      std::vector data = rr->readBuffer(read_addr, read_nbytes);
+      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
 
-		std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-		std::vector data = rr->readBuffer(read_addr, read_nbytes);
-		std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+      prettyPrint(data, read_addr);
 
-		prettyPrint(data, read_addr);
+      printf("\n\nread execution time: %lld ms\n\n", 
+         std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 
-		printf("\n\nread execution time: %lld ms\n\n", 
-			std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
-		
+   } else if(toolname == "rrwrite") {
 
-	} else if(toolname == "rrwrite") {
+   } else {
+      
+      printf("E: program '%s' not found\n", toolname.c_str());
+   }
 
-	} else {
-		
-		printf("E: program '%s' not found\n", toolname.c_str());
-	}
-
-	return(0);
+   return(0);
 }

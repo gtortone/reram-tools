@@ -10,45 +10,45 @@
 
 MB85AS12MT::MB85AS12MT(const int bus, const int cs, const int speed) {
 
-	std::string filename = "/dev/spidev" + std::to_string(bus) + "." + std::to_string(cs);
+   std::string filename = "/dev/spidev" + std::to_string(bus) + "." + std::to_string(cs);
 
-	fd = open(filename.c_str(), O_RDWR);
-	if (fd < 0)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error opening " + filename);
+   fd = open(filename.c_str(), O_RDWR);
+   if (fd < 0)
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error opening " + filename);
 
-	// fixme
-	int mode = SPI_MODE_3 | SPI_3WIRE;
-	if(ioctl(fd, SPI_IOC_WR_MODE32, &mode) == -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error setting SPI mode");
+   // fixme
+   int mode = SPI_MODE_3 | SPI_3WIRE;
+   if(ioctl(fd, SPI_IOC_WR_MODE32, &mode) == -1)
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error setting SPI mode");
 
-	if(ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed) == -1)	
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error setting SPI speed");
+   if(ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &speed) == -1)	
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error setting SPI speed");
 
-	int bits = 8;
-	if(ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits) == -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error setting SPI bits per word");
+   int bits = 8;
+   if(ioctl(fd, SPI_IOC_WR_BITS_PER_WORD, &bits) == -1)
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error setting SPI bits per word");
 
-	std::ifstream f;
-	std::string line;
-	f.open("/sys/module/spidev/parameters/bufsiz");
-	getline(f, line, '\n');
-	if (line.empty())
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error reading spidev buffer size");
-	spidev_bufsize = std::stoi(line);
-	f.close();
+   std::ifstream f;
+   std::string line;
+   f.open("/sys/module/spidev/parameters/bufsiz");
+   getline(f, line, '\n');
+   if (line.empty())
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error reading spidev buffer size");
+   spidev_bufsize = std::stoi(line);
+   f.close();
 }
 
 MB85AS12MT::~MB85AS12MT(void) {
-	if(fd)
-		close(fd);
+   if(fd)
+      close(fd);
 }
 
 MB85AS12MT::DeviceId MB85AS12MT::getDeviceId(void) {
 
-	uint8_t tx_buffer = 0x9F;
+   uint8_t tx_buffer = 0x9F;
    struct spi_ioc_transfer tr[2];
-	uint8_t buf[4];
-	MB85AS12MT::DeviceId id;
+   uint8_t buf[4];
+   MB85AS12MT::DeviceId id;
 
    memset(&tr, 0, sizeof(tr));
    tr[0].tx_buf = (unsigned long)&tx_buffer;
@@ -63,21 +63,21 @@ MB85AS12MT::DeviceId MB85AS12MT::getDeviceId(void) {
    tr[1].delay_usecs = 0;
 
    if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) == -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error reading id");
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error reading id");
 
-	id.manufacturer_id = buf[0];
-	id.continuation_code = buf[1];
-	id.product_id = (buf[2] << 8) + buf[3];
+   id.manufacturer_id = buf[0];
+   id.continuation_code = buf[1];
+   id.product_id = (buf[2] << 8) + buf[3];
 
-	return id;
+   return id;
 }
 
 MB85AS12MT::UID MB85AS12MT::getUID(void) {
 
-	uint8_t tx_buffer = 0x83;
+   uint8_t tx_buffer = 0x83;
    struct spi_ioc_transfer tr[2];
-	uint8_t buf[12];
-	MB85AS12MT::UID uid;
+   uint8_t buf[12];
+   MB85AS12MT::UID uid;
 
    memset(&tr, 0, sizeof(tr));
    tr[0].tx_buf = (unsigned long)&tx_buffer;
@@ -92,45 +92,45 @@ MB85AS12MT::UID MB85AS12MT::getUID(void) {
    tr[1].delay_usecs = 0;
 
    if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) == -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error reading uid");
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error reading uid");
 
-	uid.manufacturer_id = buf[0];
-	uid.continuation_code = buf[1];
-	uid.product_id = (buf[2] << 8) + buf[3];
-	for(int i=0;i<5;i++)
-		uid.lot_id[i] = buf[4+i];
-	uid.lot_id[5] = '\0';
-	uid.wafer_id = buf[9];
-	uid.chip_id = (buf[10] << 8) + buf[11];
+   uid.manufacturer_id = buf[0];
+   uid.continuation_code = buf[1];
+   uid.product_id = (buf[2] << 8) + buf[3];
+   for(int i=0;i<5;i++)
+      uid.lot_id[i] = buf[4+i];
+   uid.lot_id[5] = '\0';
+   uid.wafer_id = buf[9];
+   uid.chip_id = (buf[10] << 8) + buf[11];
 
    return uid;	
 }
 
 uint64_t MB85AS12MT::getUniqueId(void) {
 
-	MB85AS12MT::UID uid = getUID();
-	uint64_t unique_id = 
-		((uint64_t)uid.lot_id[0] << 56) +
-		((uint64_t)uid.lot_id[1] << 48) +
-		((uint64_t)uid.lot_id[2] << 40) +
-		((uint64_t)uid.lot_id[3] << 32) +
-		((uint64_t)uid.lot_id[4] << 24) +
-		(uid.wafer_id << 16) +
-		(uid.chip_id);
+   MB85AS12MT::UID uid = getUID();
+   uint64_t unique_id = 
+      ((uint64_t)uid.lot_id[0] << 56) +
+      ((uint64_t)uid.lot_id[1] << 48) +
+      ((uint64_t)uid.lot_id[2] << 40) +
+      ((uint64_t)uid.lot_id[3] << 32) +
+      ((uint64_t)uid.lot_id[4] << 24) +
+      (uid.wafer_id << 16) +
+      (uid.chip_id);
 
-	return unique_id; 
+   return unique_id; 
 }
 
 void MB85AS12MT::printInfo(void) {
 
-	MB85AS12MT::UID uid = getUID();
-	printf("ReRAM MB85AS12MT\n");
-	printf("Device ID info:\n");
+   MB85AS12MT::UID uid = getUID();
+   printf("ReRAM MB85AS12MT\n");
+   printf("Device ID info:\n");
    printf("   manufacturer id: 0x%02X\n", uid.manufacturer_id);
    printf("   continuation code: 0x%02X\n", uid.continuation_code);
    printf("   product id: 0x%04X\n", uid.product_id);
 
-	printf("Unique ID info:\n");	
+   printf("Unique ID info:\n");	
    printf("   lot id: %s\n", uid.lot_id);
    printf("   wafer id: 0x%02X\n", uid.wafer_id);
    printf("   chip id: 0x%04X\n", uid.chip_id);
@@ -149,7 +149,7 @@ void MB85AS12MT::writeEnable(void) {
    tr[0].delay_usecs = 0;
 
    if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) == -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 }
 
 void MB85AS12MT::writeDisable(void) {
@@ -164,14 +164,14 @@ void MB85AS12MT::writeDisable(void) {
    tr[0].delay_usecs = 0;
 
    if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) < -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 }
 
 uint8_t MB85AS12MT::readStatusRegister(void) {
 
    uint8_t tx_buffer = 0x05;
    struct spi_ioc_transfer tr[2];
-	uint8_t sr;
+   uint8_t sr;
 
    memset(&tr, 0, sizeof(tr));
    tr[0].tx_buf = (unsigned long)&tx_buffer;
@@ -186,9 +186,9 @@ uint8_t MB85AS12MT::readStatusRegister(void) {
    tr[1].delay_usecs = 0;
 
    if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) == -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
-	return sr;	
+   return sr;	
 }
 
 void MB85AS12MT::writeStatusRegister(const uint8_t value) {
@@ -205,18 +205,16 @@ void MB85AS12MT::writeStatusRegister(const uint8_t value) {
    tr[0].delay_usecs = 0;
 
    if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) == -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
    while(writeInProgress())
       ;
-
 }
 
 bool MB85AS12MT::writeInProgress(void) {
 
-	return(readStatusRegister() & 0x01);
+   return(readStatusRegister() & 0x01);
 }
-
 
 uint8_t MB85AS12MT::read(const uint32_t address) {
 
@@ -226,7 +224,7 @@ uint8_t MB85AS12MT::read(const uint32_t address) {
       (uint8_t)((address & 0x000000FF))
    };
    struct spi_ioc_transfer tr[2];
-	uint8_t value;
+   uint8_t value;
 
    memset(&tr, 0, sizeof(tr));
    tr[0].tx_buf = (unsigned long)&tx_buffer;
@@ -241,7 +239,7 @@ uint8_t MB85AS12MT::read(const uint32_t address) {
    tr[1].delay_usecs = 0;
 
    if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) == -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
    return value;
 }
@@ -256,7 +254,7 @@ void MB85AS12MT::write(const uint32_t address, const uint8_t value) {
    };
    struct spi_ioc_transfer tr[1];
 
-	writeEnable();
+   writeEnable();
 
    memset(&tr, 0, sizeof(tr));
    tr[0].tx_buf = (unsigned long)&tx_buffer;
@@ -266,12 +264,12 @@ void MB85AS12MT::write(const uint32_t address, const uint8_t value) {
    tr[0].cs_change = 0;
 
    if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) == -1)
-		throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+      throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
    while(writeInProgress())
       ;
 
-	writeDisable();
+   writeDisable();
 }
 
 void MB85AS12MT::readBuffer(uint32_t offset, uint8_t *buf, uint32_t bufsize) {
@@ -318,13 +316,13 @@ void MB85AS12MT::readBuffer(uint32_t offset, uint8_t *buf, uint32_t bufsize) {
       tr[1].delay_usecs = 0;
 
       if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) == -1)
-			throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+         throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
       m_address += spidev_bufsize;
       b_address += spidev_bufsize;
    }
 
-	if (remainder > 0) {
+   if (remainder > 0) {
       //printf("remainder: %d\n", remainder);
       memset(tx_buffer, 0, sizeof(tx_buffer));
       tx_buffer[0] = 0x03;
@@ -345,7 +343,7 @@ void MB85AS12MT::readBuffer(uint32_t offset, uint8_t *buf, uint32_t bufsize) {
       tr[1].delay_usecs = 0;
 
       if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) < -1)
-			throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+         throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
    }
 }
 
@@ -393,10 +391,10 @@ void MB85AS12MT::writeBuffer(uint32_t offset, uint8_t *buf, uint32_t bufsize) {
          tr[1].len = bufsize-1;
       tr[1].delay_usecs = 0;
 
-		writeEnable();
+      writeEnable();
 
       if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) == -1)
-			throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+         throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
       while(writeInProgress())
          sleep(0.1);
@@ -427,48 +425,48 @@ void MB85AS12MT::writeBuffer(uint32_t offset, uint8_t *buf, uint32_t bufsize) {
       tr[1].len = remainder-1;
       tr[1].delay_usecs = 0;
 
-		writeEnable();
+      writeEnable();
 
       if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) == -1)
-			throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
+         throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
       while(writeInProgress())
          ;
    }
 
-	writeDisable();	
+   writeDisable();	
 }
 
 std::vector<uint8_t> MB85AS12MT::readBuffer(uint32_t offset, uint32_t nbytes) {
 
-	std::vector<uint8_t> buf(nbytes);
+   std::vector<uint8_t> buf(nbytes);
 
-	readBuffer(offset, buf.data(), buf.size());
+   readBuffer(offset, buf.data(), buf.size());
 
-	return buf;
+   return buf;
 }
 
 void MB85AS12MT::writeBuffer(uint32_t offset, std::vector<uint8_t> buffer) {
 
-	writeBuffer(offset, buffer.data(), buffer.size());
+   writeBuffer(offset, buffer.data(), buffer.size());
 }
 
 void MB85AS12MT::dump(uint32_t start, uint32_t end) {
 
-	std::vector<uint8_t> data = readBuffer(start, end-start+1);
+   std::vector<uint8_t> data = readBuffer(start, end-start+1);
 
-	for(unsigned int i=0; i<data.size(); i++) {
-		if(i%16 == 0) {
-			printf("%06X-%06X: ", 
-				i+start, (i+15)<data.size()-1?i+start+15:data.size()-1);
-			printf("%02X ", data[i]);
-		} else {
-			printf("%02X ", data[i]);
-			if((i+1) % 16 == 0 && i+1 < data.size())
-				printf("\n");
-			else if((i+1) % 8 == 0 && i+1 < data.size())
-				printf(". ");
-		}
-	}
-	printf("\n");
+   for(unsigned int i=0; i<data.size(); i++) {
+      if(i%16 == 0) {
+         printf("%06X-%06X: ", 
+            i+start, (i+15)<data.size()-1?i+start+15:data.size()-1);
+         printf("%02X ", data[i]);
+      } else {
+         printf("%02X ", data[i]);
+         if((i+1) % 16 == 0 && i+1 < data.size())
+            printf("\n");
+         else if((i+1) % 8 == 0 && i+1 < data.size())
+            printf(". ");
+      }
+   }
+   printf("\n");
 }
