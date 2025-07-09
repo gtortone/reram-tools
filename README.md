@@ -4,7 +4,7 @@ Tools to manage ReRAM/flash memories based on Linux SPIDEV API.
 
 ## Usage
 
-A single executable provides access to different commands.
+A single executable provides access to different commands using symbolic link.
 
 
 ### rrdump
