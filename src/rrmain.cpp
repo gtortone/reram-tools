@@ -76,9 +76,11 @@ int main(int argc, const char **argv) {
 		options.push_back(OPT_INTEGER('n', "nb", &read_nbytes, "number of bytes to read (default: 1)", NULL, 0, 0));
 
 	} else if (toolname == "rrwrite") {
+
 		options.push_back(OPT_INTEGER('a', "addr", &write_addr, "address to write (default: 0)", NULL, 0, 0));
 		options.push_back(OPT_INTEGER('c', "byte", &write_byte, "byte to write (default: 0)", NULL, 0, 0));
 		options.push_back(OPT_BOOLEAN('y', "yes", &write_proceed, "do not ask confirmation", NULL, 0, 0));
+
 	}
 
    struct argparse argparse;
@@ -124,8 +126,6 @@ int main(int argc, const char **argv) {
       rr->printInfo();
 
    } else if(toolname == "rrfill") {
-
-      // ask confirmation
 
       printf("> fill byte: 0x%X (%d)\n", fill_byte, fill_byte);
       if (!fill_proceed) {
@@ -177,7 +177,7 @@ int main(int argc, const char **argv) {
 
    } else {
       
-      printf("E: program '%s' not found\n", toolname.c_str());
+      printf("E: tool '%s' not found\n", toolname.c_str());
    }
 
    return(0);
