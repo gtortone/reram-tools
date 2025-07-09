@@ -4,15 +4,15 @@ CPP=g++
 INCLUDE_DIRS = include
 INCLUDE = $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
 
-CFLAGS = -Wall -O3 -Wno-unused-result
-LDFLAGS = -O3 -L/usr/lib
+CFLAGS = -Wall -O3 -Wno-unused-result -std=c++17
+LDFLAGS = -L/usr/lib
 
-all: bin/rrtest 
+all: bin/rrmain
 
 OBJS_DIR = obj
 
-SRC_TEST=src/rrtest.cpp src/mb85as12mt.cpp
-OBJ_TEST=$(SRC_TEST:.cpp=.o)
+SRC_MAIN=src/rrmain.cpp src/mb85as12mt.cpp src/argparse.cpp
+OBJ_MAIN=$(SRC_MAIN:.cpp=.o)
 
 # use DEBUG=1 to include debugging
 ifdef DEBUG
@@ -21,13 +21,15 @@ endif
 
 MKDIR = mkdir -p
 
-bin/rrtest: $(OBJ_TEST)
+bin/rrmain: $(OBJ_MAIN)
 	@$(MKDIR) bin
 	$(CPP) -o $@ $(CFLAGS) -I$(INCLUDE_DIRS) $(LDFLAGS) $^
+	cp bin/rrmain bin/rrdump
+	rm bin/rrmain
 
 %.o: %.cpp
 	$(CPP) -c -o $@ -I$(INCLUDE_DIRS) $(CFLAGS)  $^
 
 clean:
-	rm -rf $(OBJ_TEST)
-	rm -rf bin/rrtest
+	rm -rf $(OBJ_MAIN)
+	rm -rf bin/rrdump
