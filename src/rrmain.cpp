@@ -23,6 +23,10 @@ int main(int argc, const char **argv) {
 	// rrread
 	unsigned int read_addr = 0x00;
 	unsigned int read_nbytes = 1;
+   // rrwrite
+   unsigned int write_addr = 0x00;
+   unsigned int write_byte = 0x00;
+   unsigned int write_proceed = 0;
 
    static const char *const usage[] = {
       s.c_str(),
@@ -34,6 +38,23 @@ int main(int argc, const char **argv) {
       OPT_STRING('b', "spi", &spiconf, "SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)", NULL, 0, 0),
       OPT_INTEGER('s', "freq", &freq, "SPI clock frequency in MHz (default: 1 - 1 MHz)", NULL, 0, 0),
    };
+
+   if (toolname == "rrmain") {
+      
+      if(argc > 1)
+         toolname = std::string(argv[1]);
+      else {
+         printf("syntax: %s <toolname>\n", toolname.c_str());
+         printf("I: supported tools: \n");
+         printf("\trrdump\n");
+         printf("\trrinfo\n");
+         printf("\trrfill\n");
+         printf("\trrread\n");
+         printf("\trrwrite\n");
+         printf("\n");
+         return 0;
+      }
+   }
 
 	// add options for different tools
 	if (toolname == "rrdump") {
@@ -55,7 +76,9 @@ int main(int argc, const char **argv) {
 		options.push_back(OPT_INTEGER('n', "nb", &read_nbytes, "number of bytes to read (default: 1)", NULL, 0, 0));
 
 	} else if (toolname == "rrwrite") {
-
+		options.push_back(OPT_INTEGER('a', "addr", &write_addr, "address to write (default: 0)", NULL, 0, 0));
+		options.push_back(OPT_INTEGER('c', "byte", &write_byte, "byte to write (default: 0)", NULL, 0, 0));
+		options.push_back(OPT_BOOLEAN('y', "yes", &write_proceed, "do not ask confirmation", NULL, 0, 0));
 	}
 
    struct argparse argparse;
@@ -82,8 +105,7 @@ int main(int argc, const char **argv) {
 
    printf("> SPI bus: %d, CS: %d, SCK: %d MHz\n", bus[0], bus[1], freq); if(toolname == "rrdump") {
    if (dump_full) {
-      dump_start = 0;
-      dump_end = rr->size-1;
+      dump_start = 0; dump_end = rr->size-1;
    }
    printf("> dump start: 0x%X (%d), dump end: 0x%X (%d)\n\n", 
       dump_start, dump_start, dump_end, dump_end);
@@ -137,6 +159,21 @@ int main(int argc, const char **argv) {
          std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 
    } else if(toolname == "rrwrite") {
+
+      printf("> write addr: 0x%X (%d), byte: 0x%X (%d)\n\n", 
+         write_addr, write_addr, write_byte, write_byte);
+      if (!write_proceed) {
+         printf("\nAre you sure (y/n): ");
+         if (std::tolower(getchar()) == 'n')
+            return 0;
+      }
+
+      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+      rr->write(write_addr, write_byte);
+      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+      printf("\nwrite execution time: %lld ms\n\n", 
+         std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 
    } else {
       

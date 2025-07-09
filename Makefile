@@ -24,18 +24,20 @@ MKDIR = mkdir -p
 bin/rrmain: $(OBJ_MAIN)
 	@$(MKDIR) bin
 	$(CPP) -o $@ $(CFLAGS) -I$(INCLUDE_DIRS) $(LDFLAGS) $^
-	cp bin/rrmain bin/rrdump
-	cp bin/rrmain bin/rrinfo
-	cp bin/rrmain bin/rrfill
-	cp bin/rrmain bin/rrread
-	rm bin/rrmain
+	ln -sr  bin/rrmain bin/rrdump 
+	ln -sr  bin/rrmain bin/rrinfo 
+	ln -sr  bin/rrmain bin/rrfill 
+	ln -sr  bin/rrmain bin/rrread 
+	ln -sr  bin/rrmain bin/rrwrite
 
 %.o: %.cpp
 	$(CPP) -c -o $@ -I$(INCLUDE_DIRS) $(CFLAGS)  $^
 
 clean:
 	rm -rf $(OBJ_MAIN)
+	rm -rf bin/rrmain
 	rm -rf bin/rrdump
 	rm -rf bin/rrinfo
 	rm -rf bin/rrfill
 	rm -rf bin/rrread
+	rm -rf bin/rrwrite
