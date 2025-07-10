@@ -54,9 +54,11 @@ int main(int argc, const char **argv) {
 
    std::string progname(std::filesystem::path(argv[0]).filename().u8string());
    std::string s = progname + " [options]";
-   const char *conf_file = NULL;
    std::map<std::string, DUT> dut;
    std::map<std::string, MB85AS12MT *> rr;
+   // rrcycle
+   const char *conf_file = NULL;
+   unsigned int polluter = 0; 
    
    static const char *const usage[] = {
       s.c_str(),
@@ -66,6 +68,7 @@ int main(int argc, const char **argv) {
    std::vector<struct argparse_option> options = {
       OPT_HELP(),
       OPT_STRING('c', "config", &conf_file, "YAML config file", NULL, 0, 0),
+      OPT_BOOLEAN('p', "polluter", &polluter, "enable polluter on read data", NULL, 0, 0),
       OPT_END()
    };
 
@@ -123,12 +126,112 @@ int main(int argc, const char **argv) {
    }
 
    for (auto &p : rr) {
-      printf("time=%ld,event=START,name=%s,bus=%s,speed=%d,chipid=0x%X\n", 
+      printf("time=%ld,event=prog.start,name=%s,bus=%s,speed=%d,chipid=0x%X\n", 
          std::time(nullptr), p.first.c_str(), dut[p.first].bus.c_str(), dut[p.first].speed, dut[p.first].chipid);
    }
 
    // start main loop
 
+   std::vector<uint8_t> pattern = { 0xAA, 0x55, 0x00, 0xFF };
+   std::chrono::steady_clock::time_point begin, end;
+
+   while(true) {
+
+      for (auto &p : rr) {    // for each configured DUT
+
+         MB85AS12MT &m = *(p.second);
+
+         for(auto b : pattern) {    // for each pattern
+
+            // fill
+
+            std::vector<uint8_t> data(m.size, b);
+
+            printf("time=%ld,event=fill.start,name=%s,pattern=0x%X\n",
+               std::time(nullptr), p.first.c_str(), b);
+
+            begin = std::chrono::steady_clock::now();
+            try {
+               m.writeBuffer(0, data);
+            } catch (const std::exception &e){
+               printf("time=%ld,event=fill.error,name=%s,pattern=0x%X,error=%s\n",
+                  std::time(nullptr), p.first.c_str(), b, 
+                  e.what());
+               continue;
+            }
+            end = std::chrono::steady_clock::now();
+
+            printf("time=%ld,event=fill.end,name=%s,pattern=0x%X,elapsed_ms=%lld\n",
+               std::time(nullptr), p.first.c_str(), b, 
+               std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+
+            // read 
+
+            printf("time=%ld,event=read.start,name=%s\n",
+               std::time(nullptr), p.first.c_str());
+
+            data.clear();
+
+            begin = std::chrono::steady_clock::now();
+            try {
+               data = m.readBuffer(0, m.size); 
+            } catch (const std::exception &e){
+               printf("time=%ld,event=read.error,name=%s,error=%s\n",
+                  std::time(nullptr), p.first.c_str(), 
+                  e.what());
+               continue;
+            }
+            end = std::chrono::steady_clock::now();
+
+            printf("time=%ld,event=read.end,name=%s,elapsed_ms=%lld\n",
+               std::time(nullptr), p.first.c_str(), 
+               std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+
+            // polluter
+
+            if(polluter) {
+               srand(time(0));
+               if(rand() % 2 == 1) {
+                  unsigned int num = (rand() % 10) + 1;     // number of changes [1,10]
+                  printf("time=%ld,event=polluter.start,name=%s,num_changes=%d\n",
+                     std::time(nullptr), p.first.c_str(), num);
+
+                  for(unsigned int i=0; i<num; i++) {
+                     unsigned int pos = rand() % m.size;
+                     unsigned int value = rand() % 17;
+                     data[pos] = value;
+                     printf("time=%ld,event=polluter.exec,name=%s,pos=%d,value=0x%X\n",
+                        std::time(nullptr), p.first.c_str(), pos, value);
+                  }
+
+                  printf("time=%ld,event=polluter.end,name=%s,num_changes=%d\n",
+                     std::time(nullptr), p.first.c_str(), num);
+               }
+            }
+
+            // compare
+
+            unsigned int nmismatch = 0;
+
+            printf("time=%ld,event=compare.start,name=%s,pattern=0x%X\n",
+               std::time(nullptr), p.first.c_str(), b);
+
+            begin = std::chrono::steady_clock::now();
+            for(unsigned int i=0; i<data.size(); i++) {
+               if(data[i] != b) {
+                  nmismatch++;
+                  printf("time=%ld,event=compare.mismatch,name=%s,pattern=0x%X,pos=%d,value=0x%X\n",
+                     std::time(nullptr), p.first.c_str(), b, i, data[i]);
+               }
+            }
+            end = std::chrono::steady_clock::now();
+
+            printf("time=%ld,event=compare.end,name=%s,pattern=0x%X,num_mismatch=%d,elapsed_ms=%lld\n",
+               std::time(nullptr), p.first.c_str(), b, nmismatch,
+               std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+         }
+      }
+   }
       
    return 0;
 }

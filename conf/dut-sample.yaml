@@ -14,5 +14,5 @@
 - name: U3
   bus: 0.2
   enable: true
-  speed: 5
+  speed: 10
   chipid: 0xBC03
