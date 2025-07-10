@@ -5,14 +5,17 @@ INCLUDE_DIRS = include
 INCLUDE = $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
 
 CFLAGS = -Wall -O3 -std=c++17
-LDFLAGS = -L/usr/lib
+LDFLAGS = -L/usr/lib/arm-linux-gnueabihf -lyaml-cpp
 
-all: bin/rrmain
+all: bin/rrmain bin/rrcycle
 
 OBJS_DIR = obj
 
 SRC_MAIN=src/rrmain.cpp src/mb85as12mt.cpp src/argparse.cpp src/utils.cpp
 OBJ_MAIN=$(SRC_MAIN:.cpp=.o)
+
+SRC_CYCLE=src/rrcycle.cpp src/mb85as12mt.cpp src/argparse.cpp src/utils.cpp
+OBJ_CYCLE=$(SRC_CYCLE:.cpp=.o)
 
 # use DEBUG=1 to include debugging
 ifdef DEBUG
@@ -30,6 +33,10 @@ bin/rrmain: $(OBJ_MAIN)
 	ln -srf bin/rrmain bin/rrread 
 	ln -srf bin/rrmain bin/rrwrite
 
+bin/rrcycle: $(OBJ_CYCLE)
+	@$(MKDIR) bin
+	$(CPP) -o $@ $(CFLAGS) -I$(INCLUDE_DIRS) $^ $(LDFLAGS)
+
 %.o: %.cpp
 	$(CPP) -c -o $@ -I$(INCLUDE_DIRS) $(CFLAGS)  $^
 
@@ -41,3 +48,4 @@ clean:
 	rm -rf bin/rrfill
 	rm -rf bin/rrread
 	rm -rf bin/rrwrite
+	rm -rf bin/rrcycle
