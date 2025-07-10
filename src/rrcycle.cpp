@@ -165,6 +165,32 @@ int main(int argc, const char **argv) {
                std::time(nullptr), p.first.c_str(), b, 
                std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 
+            // polluter
+
+            if(polluter) {
+               srand(time(0));
+               if(rand() % 2 == 1) {
+                  unsigned int num = (rand() % 10) + 1;     // number of changes [1:10]
+                  printf("time=%ld,event=polluter.start,name=%s,num_changes=%d\n",
+                     std::time(nullptr), p.first.c_str(), num);
+
+                  for(unsigned int i=0; i<num; i++) {
+                     unsigned int pos = rand() % m.size;
+                     unsigned int value;
+                     // force value not equal to pattern
+                     do {
+                        value  = rand() % 0x100;      // value [0x00:0xFF]
+                     } while (value == b);
+                     m.write(pos, value);
+                     printf("time=%ld,event=polluter.exec,name=%s,pos=%d,value=0x%02X\n",
+                        std::time(nullptr), p.first.c_str(), pos, value);
+                  }
+
+                  printf("time=%ld,event=polluter.end,name=%s,num_changes=%d\n",
+                     std::time(nullptr), p.first.c_str(), num);
+               }
+            }
+
             // read 
 
             printf("time=%ld,event=read.start,name=%s\n",
@@ -186,28 +212,6 @@ int main(int argc, const char **argv) {
             printf("time=%ld,event=read.end,name=%s,elapsed_ms=%lld\n",
                std::time(nullptr), p.first.c_str(), 
                std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
-
-            // polluter
-
-            if(polluter) {
-               srand(time(0));
-               if(rand() % 2 == 1) {
-                  unsigned int num = (rand() % 10) + 1;     // number of changes [1,10]
-                  printf("time=%ld,event=polluter.start,name=%s,num_changes=%d\n",
-                     std::time(nullptr), p.first.c_str(), num);
-
-                  for(unsigned int i=0; i<num; i++) {
-                     unsigned int pos = rand() % m.size;
-                     unsigned int value = rand() % 17;
-                     data[pos] = value;
-                     printf("time=%ld,event=polluter.exec,name=%s,pos=%d,value=0x%X\n",
-                        std::time(nullptr), p.first.c_str(), pos, value);
-                  }
-
-                  printf("time=%ld,event=polluter.end,name=%s,num_changes=%d\n",
-                     std::time(nullptr), p.first.c_str(), num);
-               }
-            }
 
             // compare
 
