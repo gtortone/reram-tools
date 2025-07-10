@@ -104,21 +104,24 @@ int main(int argc, const char **argv) {
 
    rr = new MB85AS12MT(bus[0], bus[1], freq * 1000000);
 
-   printf("> SPI bus: %d, CS: %d, SCK: %d MHz\n", bus[0], bus[1], freq); if(toolname == "rrdump") {
-   if (dump_full) {
-      dump_start = 0; dump_end = rr->size-1;
-   }
-   printf("> dump start: 0x%X (%d), dump end: 0x%X (%d)\n\n", 
-      dump_start, dump_start, dump_end, dump_end);
-   
-   std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-   std::vector<uint8_t> data = rr->readBuffer(dump_start, dump_end-dump_start+1);		
-   std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+   printf("> SPI bus: %d, CS: %d, SCK: %d MHz\n", bus[0], bus[1], freq); 
 
-   prettyPrint(data, dump_start);
+   if(toolname == "rrdump") {
 
-   printf("\n\ndump execution time: %lld ms\n\n", 
-      std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+      if (dump_full) {
+         dump_start = 0; dump_end = rr->size-1;
+      }
+      printf("> dump start: 0x%X (%d), dump end: 0x%X (%d)\n\n", 
+         dump_start, dump_start, dump_end, dump_end);
+      
+      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+      std::vector<uint8_t> data = rr->readBuffer(dump_start, dump_end-dump_start+1);		
+      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+
+      prettyPrint(data, dump_start);
+
+      printf("\n\ndump execution time: %lld ms\n\n", 
+         std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 
    } else if(toolname == "rrinfo") {
 
