@@ -23,7 +23,7 @@ MKDIR = mkdir -p
 
 bin/rrmain: $(OBJ_MAIN)
 	@$(MKDIR) bin
-	$(CPP) -o $@ $(CFLAGS) -I$(INCLUDE_DIRS) $(LDFLAGS) $^
+	$(CPP) -o $@ $(CFLAGS) -I$(INCLUDE_DIRS) $^ $(LDFLAGS)
 	ln -srf bin/rrmain bin/rrdump 
 	ln -srf bin/rrmain bin/rrinfo 
 	ln -srf bin/rrmain bin/rrfill 

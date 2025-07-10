@@ -80,7 +80,6 @@ int main(int argc, const char **argv) {
       options.push_back(OPT_INTEGER('a', "addr", &write_addr, "address to write (default: 0)", NULL, 0, 0));
       options.push_back(OPT_INTEGER('c', "byte", &write_byte, "byte to write (default: 0)", NULL, 0, 0));
       options.push_back(OPT_BOOLEAN('y', "yes", &write_proceed, "do not ask confirmation", NULL, 0, 0));
-
    }
 
    struct argparse argparse;

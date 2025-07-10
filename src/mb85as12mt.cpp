@@ -16,8 +16,7 @@ MB85AS12MT::MB85AS12MT(const int bus, const int cs, const int speed) {
    if (fd < 0)
       throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error opening " + filename);
 
-   // fixme
-   int mode = SPI_MODE_3 | SPI_3WIRE;
+   int mode = SPI_MODE_0 | SPI_3WIRE;
    if(ioctl(fd, SPI_IOC_WR_MODE32, &mode) == -1)
       throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error setting SPI mode");
 
