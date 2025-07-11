@@ -1,6 +1,7 @@
 #include <iostream>
 #include <ctime>
 #include <filesystem>
+#include <algorithm>
 #include <sstream>
 #include <chrono>
 #include <map>
@@ -58,7 +59,7 @@ int main(int argc, const char **argv) {
    std::map<std::string, MB85AS12MT *> rr;
    // rrcycle
    const char *conf_file = NULL;
-   unsigned int polluter = 0; 
+   unsigned int injector = 0; 
    
    static const char *const usage[] = {
       s.c_str(),
@@ -68,7 +69,7 @@ int main(int argc, const char **argv) {
    std::vector<struct argparse_option> options = {
       OPT_HELP(),
       OPT_STRING('c', "config", &conf_file, "YAML config file", NULL, 0, 0),
-      OPT_BOOLEAN('p', "polluter", &polluter, "enable polluter on read data", NULL, 0, 0),
+      OPT_BOOLEAN('i', "injector", &injector, "enable fault injector", NULL, 0, 0),
       OPT_END()
    };
 
@@ -165,28 +166,36 @@ int main(int argc, const char **argv) {
                std::time(nullptr), p.first.c_str(), b, 
                std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 
-            // polluter
+            // fault injector 
 
-            if(polluter) {
-               srand(time(0));
-               if(rand() % 2 == 1) {
+            if(injector) {
+               std::srand(unsigned(std::time(nullptr)));
+               if(std::rand() % 2 == 1) {
                   unsigned int num = (rand() % 10) + 1;     // number of changes [1:10]
-                  printf("%ld POLLUTER_START %s %d\n",
+                  printf("%ld INJECT_START %s %d\n",
                      std::time(nullptr), p.first.c_str(), num);
 
+                  // generate and sort a random list of addresses
+                  std::vector<uint8_t> pos(num);
+                  std::generate(pos.begin(), pos.end(), [&m](){ return std::rand() % m.size; } );
+                  std::sort(pos.begin(), pos.end());
+
                   for(unsigned int i=0; i<num; i++) {
-                     unsigned int pos = rand() % m.size;
                      unsigned int value;
                      // force value not equal to pattern
                      do {
                         value  = rand() % 0x100;      // value [0x00:0xFF]
                      } while (value == b);
-                     m.write(pos, value);
-                     printf("%ld POLLUTER_EXEC %s 0x%08X 0x%02X\n",
-                        std::time(nullptr), p.first.c_str(), pos, value);
+                     m.write(pos[i], value);
+                     std::map<uint8_t, uint8_t> m = bitcheck(b, value);
+                     printf("%ld INJECT %s 0x%08X %d ",
+                        std::time(nullptr), p.first.c_str(), pos[i], m.size());
+                     for(auto el : m)
+                        printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
+                     printf("\n");
                   }
 
-                  printf("%ld POLLUTER_END %s %d\n",
+                  printf("%ld INJECT_END %s %d\n",
                      std::time(nullptr), p.first.c_str(), num);
                }
             }
