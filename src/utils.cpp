@@ -17,3 +17,21 @@ void prettyPrint(std::vector<uint8_t> data, const unsigned int offset) {
       }
    }
 }
+
+std::map<uint8_t, uint8_t> bitcheck(uint8_t pattern, uint8_t value) {
+
+   std::map<uint8_t, uint8_t> m;
+   uint8_t diff = pattern ^ value;
+
+   for(int i=0; i<8; i++) {
+      if(diff & 1<<i) {
+         if(pattern & 1<<i)
+            m[i] = ONE_TO_ZERO;
+         else
+            m[i] = ZERO_TO_ONE; 
+      }
+   }
+
+   return m;
+}
+
