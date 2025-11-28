@@ -2,17 +2,17 @@
 # - name: U1         -- device name             <required>
 #   bus: 0.1         -- bus and chip select     <required>
 #   enable: true                                <optional default:true> 
-#   speed: 10        -- bus frequency in MHz    <optional default:1>
+#   speed: 1         -- bus frequency in MHz    <optional default:1>
 #   chipid: 0x1234   -- device chip id          <optional default:0>
 
 - name: U1
   bus: 0.0
   enable: true
-  speed: 10
+  speed: 1
   chipid: 0x2C50
 
 - name: U3
   bus: 0.2
-  enable: true
-  speed: 10
+  enable: false
+  speed: 1
   chipid: 0xBC03
