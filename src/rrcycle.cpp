@@ -2,6 +2,7 @@
 #include <ctime>
 #include <filesystem>
 #include <algorithm>
+#include <vector>
 #include <sstream>
 #include <chrono>
 #include <map>
@@ -60,6 +61,7 @@ int main(int argc, const char **argv) {
    // rrcycle
    const char *conf_file = NULL;
    unsigned int injector = 0; 
+   int basevalue = -1;
    
    static const char *const usage[] = {
       s.c_str(),
@@ -70,6 +72,7 @@ int main(int argc, const char **argv) {
       OPT_HELP(),
       OPT_STRING('c', "config", &conf_file, "YAML config file", NULL, 0, 0),
       OPT_BOOLEAN('i', "injector", &injector, "enable fault injector", NULL, 0, 0),
+      OPT_INTEGER(0, "verify", &basevalue, "verify memory with value", NULL, 0, 0),
       OPT_END()
    };
 
@@ -133,7 +136,11 @@ int main(int argc, const char **argv) {
 
    // start main loop
 
-   std::vector<uint8_t> pattern = { 0xAA, 0x55, 0x00, 0xFF };
+   std::vector<uint8_t> pattern;
+   if(basevalue == -1)
+      pattern = { 0xAA, 0x55, 0x00, 0xFF };
+   else
+      pattern = { (uint8_t) basevalue };
    std::chrono::steady_clock::time_point begin, end;
 
    while(true) {
@@ -141,30 +148,33 @@ int main(int argc, const char **argv) {
       for (auto &p : rr) {    // for each configured DUT
 
          MB85AS12MT &m = *(p.second);
+         std::vector<uint8_t> data(m.size);
 
          for(auto b : pattern) {    // for each pattern
 
-            // fill
+            if(basevalue == -1) {
+               // fill
 
-            std::vector<uint8_t> data(m.size, b);
+               std::fill(data.begin(), data.end(), b);
 
-            printf("%ld FILL_START %s 0x%X\n",
-               std::time(nullptr), p.first.c_str(), b);
+               printf("%ld FILL_START %s 0x%X\n",
+                  std::time(nullptr), p.first.c_str(), b);
 
-            begin = std::chrono::steady_clock::now();
-            try {
-               m.writeBuffer(0, data);
-            } catch (const std::exception &e){
-               printf("%ld FILL_ERROR %s 0x%X %s\n",
+               begin = std::chrono::steady_clock::now();
+               try {
+                  m.writeBuffer(0, data);
+               } catch (const std::exception &e){
+                  printf("%ld FILL_ERROR %s 0x%X %s\n",
+                     std::time(nullptr), p.first.c_str(), b, 
+                     e.what());
+                  continue;
+               }
+               end = std::chrono::steady_clock::now();
+
+               printf("%ld FILL_END %s 0x%X %lld\n",
                   std::time(nullptr), p.first.c_str(), b, 
-                  e.what());
-               continue;
+                  std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
             }
-            end = std::chrono::steady_clock::now();
-
-            printf("%ld FILL_END %s 0x%X %lld\n",
-               std::time(nullptr), p.first.c_str(), b, 
-               std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
 
             // fault injector 
 
