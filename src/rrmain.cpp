@@ -169,18 +169,20 @@ int main(int argc, const char **argv) {
 
       if (input_file != NULL) {
 
-         std::ifstream f(input_file, std::ios::in | std::ios::binary);
+         std::ifstream f(input_file, std::ios::in | std::ios::binary | std::ios::ate);
 
          if(!f.is_open()) {
             printf("E: file %s open error\n", input_file);
             return(-1);
          }
 
+         std::streamsize fsize = f.tellg();
+
          char *memblock = new char[rr->size];
          f.seekg(0, std::ios::beg);
          f.read(memblock, rr->size);
 
-         printf("> write file: %s, number of bytes: %d\n\n", input_file, f.gcount());
+         printf("> write file: %s, number of bytes: %d, file size: %d\n\n", input_file, f.gcount(), fsize);
 
          if (!write_proceed) {
             printf("\nAre you sure (y/n): ");
