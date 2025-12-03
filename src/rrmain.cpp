@@ -2,6 +2,7 @@
 #include <vector>
 #include <filesystem>
 #include <sstream>
+#include <fstream>
 #include <chrono>
 #include "argparse.h"
 #include "utils.h"
@@ -27,6 +28,9 @@ int main(int argc, const char **argv) {
    unsigned int write_addr = 0x00;
    unsigned int write_byte = 0x00;
    unsigned int write_proceed = 0;
+   const char *input_file = NULL;
+
+   std::chrono::steady_clock::time_point begin, end;
 
    static const char *const usage[] = {
       s.c_str(),
@@ -79,6 +83,7 @@ int main(int argc, const char **argv) {
 
       options.push_back(OPT_INTEGER('a', "addr", &write_addr, "address to write (default: 0)", NULL, 0, 0));
       options.push_back(OPT_INTEGER('c', "byte", &write_byte, "byte to write (default: 0)", NULL, 0, 0));
+      options.push_back(OPT_STRING('f', "file", &input_file, "file to write", NULL, 0, 0));
       options.push_back(OPT_BOOLEAN('y', "yes", &write_proceed, "do not ask confirmation", NULL, 0, 0));
    }
 
@@ -114,9 +119,9 @@ int main(int argc, const char **argv) {
       printf("> dump start: 0x%X (%d), dump end: 0x%X (%d)\n\n", 
          dump_start, dump_start, dump_end, dump_end);
       
-      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+      begin = std::chrono::steady_clock::now();
       std::vector<uint8_t> data = rr->readBuffer(dump_start, dump_end-dump_start+1);		
-      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+      end = std::chrono::steady_clock::now();
 
       prettyPrint(data, dump_start);
 
@@ -140,9 +145,9 @@ int main(int argc, const char **argv) {
 
       std::vector<uint8_t> data(rr->size, fill_byte);
 
-      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+      begin = std::chrono::steady_clock::now();
       rr->writeBuffer(0, data);			
-      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+      end = std::chrono::steady_clock::now();
 
       printf("\nfill execution time: %lld ms\n\n", 
          std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
@@ -151,9 +156,9 @@ int main(int argc, const char **argv) {
 
       printf("> read addr: 0x%X (%d), nbytes: %d\n\n", read_addr, read_addr, read_nbytes);			
 
-      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+      begin = std::chrono::steady_clock::now();
       std::vector data = rr->readBuffer(read_addr, read_nbytes);
-      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+      end = std::chrono::steady_clock::now();
 
       prettyPrint(data, read_addr);
 
@@ -162,17 +167,44 @@ int main(int argc, const char **argv) {
 
    } else if(toolname == "rrwrite") {
 
-      printf("> write addr: 0x%X (%d), byte: 0x%X (%d)\n\n", 
-         write_addr, write_addr, write_byte, write_byte);
-      if (!write_proceed) {
-         printf("\nAre you sure (y/n): ");
-         if (std::tolower(getchar()) == 'n')
-            return 0;
-      }
+      if (input_file != NULL) {
 
-      std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-      rr->write(write_addr, write_byte);
-      std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+         std::ifstream f(input_file, std::ios::in | std::ios::binary);
+
+         if(!f.is_open()) {
+            printf("E: file %s open error\n", input_file);
+            return(-1);
+         }
+
+         char *memblock = new char[rr->size];
+         f.seekg(0, std::ios::beg);
+         f.read(memblock, rr->size);
+
+         printf("> write file: %s, number of bytes: %d\n\n", input_file, f.gcount());
+
+         if (!write_proceed) {
+            printf("\nAre you sure (y/n): ");
+            if (std::tolower(getchar()) == 'n')
+               return 0;
+         }
+
+         begin = std::chrono::steady_clock::now();
+         rr->writeBuffer(0, (uint8_t *) memblock, f.gcount());
+         end = std::chrono::steady_clock::now(); 
+         
+      } else {
+
+         printf("> write addr: 0x%X (%d), byte: 0x%X (%d)\n\n", 
+            write_addr, write_addr, write_byte, write_byte);
+         if (!write_proceed) {
+            printf("\nAre you sure (y/n): ");
+            if (std::tolower(getchar()) == 'n')
+               return 0;
+         }
+         begin = std::chrono::steady_clock::now();
+         rr->write(write_addr, write_byte);
+         end = std::chrono::steady_clock::now();
+      }
 
       printf("\nwrite execution time: %lld ms\n\n", 
          std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
@@ -180,6 +212,7 @@ int main(int argc, const char **argv) {
    } else {
       
       printf("E: tool '%s' not found\n", toolname.c_str());
+      return(-1);
    }
 
    return(0);
