@@ -69,5 +69,6 @@ Options
     -s, --freq=<int>  SPI clock frequency in MHz (default: 1 - 1 MHz)
     -a, --addr=<int>  address to write (default: 0)
     -c, --byte=<int>  byte to write (default: 0)
+    -f, --file=<str>  file to write
     -y, --yes         do not ask confirmation
 ```
