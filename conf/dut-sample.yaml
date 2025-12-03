@@ -11,8 +11,8 @@
   speed: 1
   chipid: 0x2C50
 
-- name: U3
-  bus: 0.2
-  enable: false
+- name: U2
+  bus: 0.1
+  enable: true
   speed: 1
-  chipid: 0xBC03
+  chipid: 0x4950
