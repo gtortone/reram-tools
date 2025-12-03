@@ -289,7 +289,7 @@ int main(int argc, const char **argv) {
             for(unsigned int i=0; i<length; i++) {
                if(data[i] != memblock[i]) {
                   nmismatch++;
-                  std::map<uint8_t, uint8_t> m = bitcheck(b, data[i]);
+                  std::map<uint8_t, uint8_t> m = bitcheck(memblock[i], data[i]);
                   printf("%ld FLIP %s 0x%08X %d ",
                      std::time(nullptr), p.first.c_str(), i, m.size());
                   for(auto el : m) {
