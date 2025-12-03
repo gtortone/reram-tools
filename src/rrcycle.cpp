@@ -145,14 +145,15 @@ int main(int argc, const char **argv) {
 
    while(true) {
 
-      for (auto &p : rr) {    // for each configured DUT
+      for(auto b : pattern) {    // for each pattern
 
-         MB85AS12MT &m = *(p.second);
-         std::vector<uint8_t> data(m.size);
+         for (auto &p : rr) {    // for each configured DUT
 
-         for(auto b : pattern) {    // for each pattern
+            MB85AS12MT &m = *(p.second);
+            std::vector<uint8_t> data(m.size);
 
             if(basevalue == -1) {
+
                // fill
 
                std::fill(data.begin(), data.end(), b);
