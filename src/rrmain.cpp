@@ -146,7 +146,12 @@ int main(int argc, const char **argv) {
       std::vector<uint8_t> data(rr->size, fill_byte);
 
       begin = std::chrono::steady_clock::now();
-      rr->writeBuffer(0, data);			
+      try {
+         rr->writeBuffer(0, data);			
+      } catch(...) {
+         printf("E: rrfill abort\n");
+         return -1;
+      }
       end = std::chrono::steady_clock::now();
 
       printf("\nfill execution time: %lld ms\n\n", 
@@ -191,7 +196,12 @@ int main(int argc, const char **argv) {
          }
 
          begin = std::chrono::steady_clock::now();
-         rr->writeBuffer(0, (uint8_t *) memblock, f.gcount());
+         try {
+            rr->writeBuffer(0, (uint8_t *) memblock, f.gcount());
+         } catch(...) {
+            printf("E: rrwrite abort\n");
+            return -1;
+         }
          end = std::chrono::steady_clock::now(); 
          
       } else {
@@ -204,7 +214,12 @@ int main(int argc, const char **argv) {
                return 0;
          }
          begin = std::chrono::steady_clock::now();
-         rr->write(write_addr, write_byte);
+         try {
+            rr->write(write_addr, write_byte);
+         } catch(...) {
+            printf("E: rrwrite abort\n");
+            return -1;
+         }
          end = std::chrono::steady_clock::now();
       }
 

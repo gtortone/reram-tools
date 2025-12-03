@@ -3,10 +3,15 @@
 #include <string>
 #include <cstring>  // memset
 #include <unistd.h> // close
+#include <chrono>
+#include <thread>
 #include <fstream>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
+
+#define TIMEOUT_INTERVAL      1        // milliseconds
+#define TIMEOUT_MAX           5000     // milliseconds
 
 MB85AS12MT::MB85AS12MT(const int bus, const int cs, const int speed) {
 
@@ -206,8 +211,15 @@ void MB85AS12MT::writeStatusRegister(const uint8_t value) {
    if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) == -1)
       throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
-   while(writeInProgress())
-      ;
+   int ntry = TIMEOUT_MAX;
+   while(true) {
+      if(!writeInProgress())
+         break;
+      std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_INTERVAL));
+      ntry -= TIMEOUT_INTERVAL;
+      if(ntry <= 0)
+         throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": write bit stucked");
+   }
 }
 
 bool MB85AS12MT::writeInProgress(void) {
@@ -265,8 +277,15 @@ void MB85AS12MT::write(const uint32_t address, const uint8_t value) {
    if (ioctl(fd, SPI_IOC_MESSAGE(1), &tr) == -1)
       throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
-   while(writeInProgress())
-      ;
+   int ntry = TIMEOUT_MAX;
+   while(true) {
+      if(!writeInProgress())
+         break;
+      std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_INTERVAL));
+      ntry -= TIMEOUT_INTERVAL;
+      if(ntry <= 0)
+         throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": write bit stucked");
+   }
 
    writeDisable();
 }
@@ -395,8 +414,15 @@ void MB85AS12MT::writeBuffer(uint32_t offset, uint8_t *buf, uint32_t bufsize) {
       if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) == -1)
          throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
-      while(writeInProgress())
-         sleep(0.1);
+      int ntry = TIMEOUT_MAX;
+      while(true) {
+         if(!writeInProgress())
+            break;
+         std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_INTERVAL));
+         ntry -= TIMEOUT_INTERVAL;
+         if(ntry <= 0)
+            throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": write bit stucked");
+      }
 
       m_address += 256;
       b_address += 256;
@@ -429,8 +455,15 @@ void MB85AS12MT::writeBuffer(uint32_t offset, uint8_t *buf, uint32_t bufsize) {
       if (ioctl(fd, SPI_IOC_MESSAGE(2), &tr) == -1)
          throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error");
 
-      while(writeInProgress())
-         ;
+      int ntry = TIMEOUT_MAX;
+      while(true) {
+         if(!writeInProgress())
+            break;
+         std::this_thread::sleep_for(std::chrono::milliseconds(TIMEOUT_INTERVAL));
+         ntry -= TIMEOUT_INTERVAL;
+         if(ntry <= 0)
+            throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": write bit stucked");
+      }
    }
 
    writeDisable();	

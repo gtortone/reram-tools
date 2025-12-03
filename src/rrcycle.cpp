@@ -227,7 +227,14 @@ int main(int argc, const char **argv) {
                   do {
                      value  = rand() % 0x100;      // value [0x00:0xFF]
                   } while (value == b);
-                  m.write(pos[i], value);
+                  try {
+                     m.write(pos[i], value);
+                  } catch (const std::exception &e){
+                     printf("%ld INJECT_ERROR %s 0x%X %s\n",
+                        std::time(nullptr), p.first.c_str(), value,
+                        e.what());
+                     continue;
+                  }
                   std::map<uint8_t, uint8_t> m = bitcheck(b, value);
                   printf("%ld INJECT %s 0x%08X %d ",
                      std::time(nullptr), p.first.c_str(), pos[i], m.size());
