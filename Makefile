@@ -5,7 +5,7 @@ INCLUDE_DIRS = include
 INCLUDE = $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
 
 CFLAGS = -Wall -O3 -std=c++17
-LDFLAGS = -L/usr/lib/arm-linux-gnueabihf -lyaml-cpp
+LDFLAGS = -L/usr/lib/arm-linux-gnueabihf -lyaml-cpp -lpthread
 
 all: bin/rrmain bin/rrcycle
 

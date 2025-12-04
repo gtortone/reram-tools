@@ -7,6 +7,8 @@
 #include <sstream>
 #include <chrono>
 #include <map>
+#include <thread>
+#include <atomic>
 #include "yaml-cpp/yaml.h"
 #include "yaml-cpp/node/parse.h"
 #include "yaml-cpp/node/node.h"
@@ -51,6 +53,23 @@ namespace YAML {
          return true;
        }
    };
+}
+
+std::atomic<bool> running(true);
+
+void keyListener() {
+   enableRawMode();
+
+   while (running) {
+      if (getch_nonblock() == 'q') {
+         printf("\n\n QUIT command received... \n\n");
+         running = false;
+         break;
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+   }
+
+   disableRawMode();
 }
 
 int main(int argc, const char **argv) {
@@ -170,7 +189,9 @@ int main(int argc, const char **argv) {
    std::chrono::steady_clock::time_point begin, end;
    unsigned int idx = 0;
 
-   while(true) {
+   std::thread listener(keyListener);
+
+   while(running) {
 
       if (idx == pattern.size())
          idx = 0;
@@ -178,6 +199,9 @@ int main(int argc, const char **argv) {
       uint8_t b = pattern[idx++];
 
       for (auto &p : rr) {    // for each configured DUT
+
+         if(!running)
+            break;
 
          MB85AS12MT &m = *(p.second);
          std::vector<uint8_t> rrdata(m.size);      // data read from ReRAM
@@ -352,6 +376,9 @@ int main(int argc, const char **argv) {
          }
       }
    }
+
+   listener.join();
+   printf("\nBye!");
       
    return 0;
 }

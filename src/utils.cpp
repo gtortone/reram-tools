@@ -1,4 +1,8 @@
 #include <cstdio>
+#include <termios.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #include "utils.h"
 
 void prettyPrint(std::vector<uint8_t> data, const unsigned int offset) {
@@ -34,4 +38,28 @@ std::map<uint8_t, uint8_t> bitcheck(uint8_t pattern, uint8_t value) {
 
    return m;
 }
+
+void enableRawMode(void) {
+    termios t;
+    tcgetattr(STDIN_FILENO, &t);
+    t.c_lflag &= ~(ICANON | ECHO);
+    tcsetattr(STDIN_FILENO, TCSANOW, &t);
+    fcntl(STDIN_FILENO, F_SETFL, O_NONBLOCK);
+}
+
+void disableRawMode(void) {
+    termios t;
+    tcgetattr(STDIN_FILENO, &t);
+    t.c_lflag |= ICANON | ECHO;
+    tcsetattr(STDIN_FILENO, TCSANOW, &t);
+    fcntl(STDIN_FILENO, F_SETFL, 0);
+}
+
+
+char getch_nonblock(void) {
+    char c = 0;
+    read(STDIN_FILENO, &c, 1);
+    return c;
+}
+
 
