@@ -317,10 +317,10 @@ int main(int argc, const char **argv) {
 
          // compare
 
-         unsigned int nmismatch = 0;
+         unsigned int nmismatch_loc = 0;
+         unsigned int nmismatch_bit = 0;
 
          begin = std::chrono::steady_clock::now();
-
          
          if (input_file != NULL) {
    
@@ -331,12 +331,13 @@ int main(int argc, const char **argv) {
 
             for(unsigned int i=0; i<rrlen; i++) {
                if(rrdata[i] != memblock[i]) {
-                  nmismatch++;
+                  nmismatch_loc++;
                   std::map<uint8_t, uint8_t> m = bitcheck(memblock[i], rrdata[i]);
                   printf("%ld FLIP %s 0x%08X %d ",
                      std::time(nullptr), p.first.c_str(), i, m.size());
                   for(auto el : m) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
+                     nmismatch_bit++;
                   } 
                   printf("\n");
                }
@@ -344,8 +345,8 @@ int main(int argc, const char **argv) {
 
             end = std::chrono::steady_clock::now();
 
-            printf("%ld CHECK_COMPLETE %s %s %d %lld\n",
-               std::time(nullptr), p.first.c_str(), input_file, nmismatch,
+            printf("%ld CHECK_COMPLETE %s %d %d %s %lld\n",
+               std::time(nullptr), p.first.c_str(), nmismatch_loc, nmismatch_bit, input_file,
                std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
             
          } else {
@@ -357,12 +358,13 @@ int main(int argc, const char **argv) {
 
             for(unsigned int i=0; i<rrdata.size(); i++) {
                if(rrdata[i] != b) {
-                  nmismatch++;
+                  nmismatch_loc++;
                   std::map<uint8_t, uint8_t> m = bitcheck(b, rrdata[i]);
                   printf("%ld FLIP %s 0x%08X %d ",
                      std::time(nullptr), p.first.c_str(), i, m.size());
                   for(auto el : m) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
+                     nmismatch_bit++;
                   } 
                   printf("\n");
                }
@@ -370,8 +372,8 @@ int main(int argc, const char **argv) {
 
             end = std::chrono::steady_clock::now();
 
-            printf("%ld CHECK_COMPLETE %s 0x%X %d %lld\n",
-               std::time(nullptr), p.first.c_str(), b, nmismatch,
+            printf("%ld CHECK_COMPLETE %s %d %d 0x%X %lld\n",
+               std::time(nullptr), p.first.c_str(), nmismatch_loc, nmismatch_bit, b,
                std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
          }
       }
