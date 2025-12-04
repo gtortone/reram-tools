@@ -40,6 +40,10 @@ MB85AS12MT::MB85AS12MT(const int bus, const int cs, const int speed) {
       throw std::runtime_error("E: " + std::string(__PRETTY_FUNCTION__) + ": error reading spidev buffer size");
    spidev_bufsize = std::stoi(line);
    f.close();
+
+   spi_bus = bus;
+   spi_cs = cs;
+   spi_speed = speed;
 }
 
 MB85AS12MT::~MB85AS12MT(void) {

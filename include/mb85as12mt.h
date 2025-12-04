@@ -29,10 +29,18 @@ public:
       uint32_t value:32;
    } DeviceId;
 
+   int spi_bus;
+   int spi_cs;
+   int spi_speed;
+
    const uint32_t size = 1572864;
 
    MB85AS12MT(const int bus, const int cs, const int speed);
    ~MB85AS12MT(void);
+
+   int getBus(void) { return spi_bus; };
+   int getCS(void) { return spi_cs; };
+   int getSpeed(void) { return spi_speed; };
 
    MB85AS12MT::DeviceId getDeviceId(void);
    MB85AS12MT::UID getUID(void);
