@@ -180,20 +180,26 @@ int main(int argc, const char **argv) {
       for (auto &p : rr) {    // for each configured DUT
 
          MB85AS12MT &m = *(p.second);
-         std::vector<uint8_t> data(m.size);
+         std::vector<uint8_t> rrdata(m.size);      // data read from ReRAM
+         unsigned int rrlen;                       // data length of payload stored in ReRAM
+
+         if (input_file != NULL)
+            rrlen = (rrdata.size() < memblock.size()) ? rrdata.size() : memblock.size();
+         else
+            rrlen = m.size;
 
          if(do_fill) {
 
             // fill
 
-            std::fill(data.begin(), data.end(), b);
+            std::fill(rrdata.begin(), rrdata.end(), b);
 
             printf("%ld FILL_START %s 0x%X\n",
                std::time(nullptr), p.first.c_str(), b);
 
             begin = std::chrono::steady_clock::now();
             try {
-               m.writeBuffer(0, data);
+               m.writeBuffer(0, rrdata);
             } catch (const std::exception &e){
                printf("%ld FILL_ERROR %s 0x%X %s\n",
                   std::time(nullptr), p.first.c_str(), b, 
@@ -218,15 +224,23 @@ int main(int argc, const char **argv) {
 
                // generate and sort a random list of addresses
                std::vector<uint8_t> pos(num);
-               std::generate(pos.begin(), pos.end(), [&m](){ return std::rand() % m.size; } );
+               std::generate(pos.begin(), pos.end(), [&rrlen](){ return std::rand() % rrlen; } );
                std::sort(pos.begin(), pos.end());
 
                for(unsigned int i=0; i<num; i++) {
+
+                  // generate value to inject
                   unsigned int value;
-                  // force value not equal to pattern
-                  do {
+                  if (input_file != NULL) {
                      value  = rand() % 0x100;      // value [0x00:0xFF]
-                  } while (value == b);
+                  } else {
+                     // force value not equal to pattern
+                     do {
+                        value  = rand() % 0x100;      // value [0x00:0xFF]
+                     } while (value == b);
+                  }
+
+                  // write value to ReRAM
                   try {
                      m.write(pos[i], value);
                   } catch (const std::exception &e){
@@ -235,10 +249,17 @@ int main(int argc, const char **argv) {
                         e.what());
                      continue;
                   }
-                  std::map<uint8_t, uint8_t> m = bitcheck(b, value);
+
+                  // print flip data
+                  std::map<uint8_t, uint8_t> mflip;
+                  if (input_file != NULL)
+                     mflip = bitcheck(memblock[pos[i]], value);
+                  else
+                     mflip = bitcheck(b, value);
+
                   printf("%ld INJECT %s 0x%08X %d ",
-                     std::time(nullptr), p.first.c_str(), pos[i], m.size());
-                  for(auto el : m)
+                     std::time(nullptr), p.first.c_str(), pos[i], mflip.size());
+                  for(auto el : mflip)
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
                   printf("\n");
                }
@@ -253,11 +274,11 @@ int main(int argc, const char **argv) {
          printf("%ld READ_START %s\n",
             std::time(nullptr), p.first.c_str());
 
-         data.clear();
+         rrdata.clear();
 
          begin = std::chrono::steady_clock::now();
          try {
-            data = m.readBuffer(0, m.size); 
+            rrdata = m.readBuffer(0, m.size); 
          } catch (const std::exception &e){
             printf("%ld READ_ERROR %s %s\n",
                std::time(nullptr), p.first.c_str(), 
@@ -284,12 +305,10 @@ int main(int argc, const char **argv) {
             printf("%ld CHECK_START %s %s\n",
                std::time(nullptr), p.first.c_str(), input_file);
 
-            unsigned int length = (data.size() < memblock.size()) ? data.size() : memblock.size();
-
-            for(unsigned int i=0; i<length; i++) {
-               if(data[i] != memblock[i]) {
+            for(unsigned int i=0; i<rrlen; i++) {
+               if(rrdata[i] != memblock[i]) {
                   nmismatch++;
-                  std::map<uint8_t, uint8_t> m = bitcheck(memblock[i], data[i]);
+                  std::map<uint8_t, uint8_t> m = bitcheck(memblock[i], rrdata[i]);
                   printf("%ld FLIP %s 0x%08X %d ",
                      std::time(nullptr), p.first.c_str(), i, m.size());
                   for(auto el : m) {
@@ -312,10 +331,10 @@ int main(int argc, const char **argv) {
             printf("%ld CHECK_START %s 0x%X\n",
                std::time(nullptr), p.first.c_str(), b);
 
-            for(unsigned int i=0; i<data.size(); i++) {
-               if(data[i] != b) {
+            for(unsigned int i=0; i<rrdata.size(); i++) {
+               if(rrdata[i] != b) {
                   nmismatch++;
-                  std::map<uint8_t, uint8_t> m = bitcheck(b, data[i]);
+                  std::map<uint8_t, uint8_t> m = bitcheck(b, rrdata[i]);
                   printf("%ld FLIP %s 0x%08X %d ",
                      std::time(nullptr), p.first.c_str(), i, m.size());
                   for(auto el : m) {
