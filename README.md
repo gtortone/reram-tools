@@ -13,12 +13,13 @@ A single executable provides access to different commands using symbolic link.
 Usage: rrdump [options]
 Options
 
-    -h, --help        show this help message and exit
-    -b, --spi=<str>   SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
-    -s, --freq=<int>  SPI clock frequency in MHz (default: 1 - 1 MHz)
-    --start=<int>     start address to dump (default: 0)
-    --end=<int>       end address to dump (default: 256)
-    -f, --full        full dump
+    -h, --help            show this help message and exit
+    -c, --config=<str>    YAML config file
+    -b, --spi=<str>       SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
+    -s, --freq=<int>      SPI clock frequency in MHz (default: 1 - 1 MHz)
+    --start=<int>         start address to dump (default: 0)
+    --end=<int>           end address to dump (default: 256)
+    -f, --full            full dump
 ```
 
 ### rrfill
@@ -27,11 +28,12 @@ Options
 Usage: rrfill [options]
 Options
 
-    -h, --help        show this help message and exit
-    -b, --spi=<str>   SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
-    -s, --freq=<int>  SPI clock frequency in MHz (default: 1 - 1 MHz)
-    -c, --byte=<int>  byte to fill whole memory (default: 0)
-    -y, --yes         do not ask confirmation
+    -h, --help            show this help message and exit
+    -c, --config=<str>    YAML config file
+    -b, --spi=<str>       SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
+    -s, --freq=<int>      SPI clock frequency in MHz (default: 1 - 1 MHz)
+    -v, --value=<int>     byte to fill whole memory (default: 0)
+    -y, --yes             do not ask confirmation
 ```
 
 ### rrinfo
@@ -40,9 +42,10 @@ Options
 Usage: rrinfo [options]
 Options
 
-    -h, --help        show this help message and exit
-    -b, --spi=<str>   SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
-    -s, --freq=<int>  SPI clock frequency in MHz (default: 1 - 1 MHz)
+    -h, --help            show this help message and exit
+    -c, --config=<str>    YAML config file
+    -b, --spi=<str>       SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
+    -s, --freq=<int>      SPI clock frequency in MHz (default: 1 - 1 MHz)
 ```
 
 ### rrread
@@ -51,11 +54,12 @@ Options
 Usage: rrread [options]
 Options
 
-    -h, --help        show this help message and exit
-    -b, --spi=<str>   SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
-    -s, --freq=<int>  SPI clock frequency in MHz (default: 1 - 1 MHz)
-    -a, --addr=<int>  address to read (default: 0)
-    -n, --nb=<int>    number of bytes to read (default: 1)
+    -h, --help            show this help message and exit
+    -c, --config=<str>    YAML config file
+    -b, --spi=<str>       SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
+    -s, --freq=<int>      SPI clock frequency in MHz (default: 1 - 1 MHz)
+    -a, --addr=<int>      address to read (default: 0)
+    -n, --nb=<int>        number of bytes to read (default: 1)
 ```
 
 ### rrwrite
@@ -64,11 +68,12 @@ Options
 Usage: rrwrite [options]
 Options
 
-    -h, --help        show this help message and exit
-    -b, --spi=<str>   SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
-    -s, --freq=<int>  SPI clock frequency in MHz (default: 1 - 1 MHz)
-    -a, --addr=<int>  address to write (default: 0)
-    -c, --byte=<int>  byte to write (default: 0)
-    -f, --file=<str>  file to write
-    -y, --yes         do not ask confirmation
+    -h, --help            show this help message and exit
+    -c, --config=<str>    YAML config file
+    -b, --spi=<str>       SPI bus number and chip select (default: 0.0 - /dev/spidev0.0)
+    -s, --freq=<int>      SPI clock frequency in MHz (default: 1 - 1 MHz)
+    -a, --addr=<int>      address to write (default: 0)
+    -v, --value=<int>     byte to write (default: 0)
+    -f, --file=<str>      file to write
+    -y, --yes             do not ask confirmation
 ```
