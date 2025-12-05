@@ -201,6 +201,9 @@ int main(int argc, const char **argv) {
 
          // fault injector 
 
+         std::vector<uint32_t> pos;
+         std::vector<uint8_t> orig_values;
+
          if(injector) {
             std::srand(unsigned(std::time(nullptr)));
             if(std::rand() % 2 == 1) {
@@ -208,23 +211,26 @@ int main(int argc, const char **argv) {
                printf("%ld INJECT_START %s %d\n",
                   std::time(nullptr), p.first.c_str(), num);
 
+               // reset address array
+               pos.clear();
+               pos.resize(num);
+               orig_values.clear();
+
                // generate and sort a random list of addresses
-               std::vector<uint8_t> pos(num);
                std::generate(pos.begin(), pos.end(), [&rrlen](){ return std::rand() % rrlen; } );
                std::sort(pos.begin(), pos.end());
+               // remove duplicates
+               pos.erase(std::unique(pos.begin(), pos.end()), pos.end());
 
-               for(unsigned int i=0; i<num; i++) {
+               for(unsigned int i=0; i<pos.size(); i++) {
+
+                  // read value from ReRAM
+                  uint8_t rr_value = m.read(pos[i]);
+                  orig_values.push_back(rr_value);
 
                   // generate value to inject
                   unsigned int value;
-                  if (input_file != NULL) {
-                     value  = rand() % 0x100;      // value [0x00:0xFF]
-                  } else {
-                     // force value not equal to pattern
-                     do {
-                        value  = rand() % 0x100;      // value [0x00:0xFF]
-                     } while (value == b);
-                  }
+                  value = rr_value ^ ((rand() % 0xFE) + 1);    // mask [0x01:0xFE]
 
                   // write value to ReRAM
                   try {
@@ -251,7 +257,7 @@ int main(int argc, const char **argv) {
                }
 
                printf("%ld INJECT_END %s %d\n",
-                  std::time(nullptr), p.first.c_str(), num);
+                  std::time(nullptr), p.first.c_str(), pos.size());
             }
          }
 
@@ -337,6 +343,13 @@ int main(int argc, const char **argv) {
             printf("%ld CHECK_COMPLETE %s %d %d 0x%X %lld\n",
                std::time(nullptr), p.first.c_str(), nmismatch_loc, nmismatch_bit, b,
                std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+         }
+
+         // restore ReRAM original values
+         if(injector) {
+            for(unsigned int i=0; i<pos.size(); i++) {
+               m.write(pos[i], orig_values[i]);
+            }
          }
       }
    }
