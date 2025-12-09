@@ -48,6 +48,7 @@ int main(int argc, const char **argv) {
    std::ifstream f;
    std::vector<char> memblock;
    bool do_fill = true;
+   std::chrono::steady_clock::time_point run_begin, run_end;
    
    static const char *const usage[] = {
       s.c_str(),
@@ -150,6 +151,8 @@ int main(int argc, const char **argv) {
 
    std::chrono::steady_clock::time_point begin, end;
    unsigned int idx = 0;
+
+   run_begin = std::chrono::steady_clock::now();
 
    std::thread listener(keyListener);
 
@@ -353,6 +356,9 @@ int main(int argc, const char **argv) {
          }
       }
    }
+
+   run_end = std::chrono::steady_clock::now();
+   printf("\nRun duration: %lld seconds\n", std::chrono::duration_cast<std::chrono::seconds>(run_end - run_begin).count());  
 
    listener.join();
    printf("\nBye!");
