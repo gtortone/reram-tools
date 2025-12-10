@@ -372,6 +372,9 @@ int main(int argc, const char **argv) {
                }
             }
 
+            if(alarm)
+               continue;
+
             end = std::chrono::steady_clock::now();
 
             printf("%ld CHECK_COMPLETE %s %d %d 0x%X %lld\n",
