@@ -20,6 +20,7 @@
 #define MAX_FLIP_COUNT     4096
 
 std::atomic<bool> running(true);
+std::atomic<bool> alarm(false);
 
 void keyListener() {
    enableRawMode();
@@ -51,7 +52,6 @@ int main(int argc, const char **argv) {
    std::vector<char> memblock;
    bool do_fill = true;
    std::chrono::steady_clock::time_point run_begin, run_end;
-   bool alarm = false;
    
    static const char *const usage[] = {
       s.c_str(),
@@ -66,6 +66,8 @@ int main(int argc, const char **argv) {
       OPT_STRING(0, "verify-file", &input_file, "verify memory with file", NULL, 0, 0),
       OPT_END()
    };
+
+   std::string exePath = std::filesystem::absolute(argv[0]).parent_path().string();
 
    struct argparse argparse;
    argparse_init(&argparse, options.data(), usage, 0);
@@ -159,7 +161,7 @@ int main(int argc, const char **argv) {
 
    std::thread listener(keyListener);
 
-   while(running && !alarm) {
+   while(running and !alarm) {
 
       if (idx == pattern.size())
          idx = 0;
@@ -317,18 +319,21 @@ int main(int argc, const char **argv) {
                      nmismatch_bit++;
                   } 
                   if(nmismatch_loc > MAX_FLIP_COUNT) {
-                     const char *dump_filename = (p.first + ".dump").c_str();
+                     const char *dump_filename = (exePath + "/" + p.first + ".dump").c_str();
                      printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
                      std::remove(dump_filename);
                      std::ofstream outfile(dump_filename, std::ios::binary);
                      outfile.write((const char *) rrdata.data(), rrdata.size());
                      outfile.close();
                      alarm = true;
-                     continue;
+                     break;
                   }
                   printf("\n");
                }
             }
+
+            if(alarm)
+               continue;
 
             end = std::chrono::steady_clock::now();
 
@@ -354,14 +359,14 @@ int main(int argc, const char **argv) {
                      nmismatch_bit++;
                   } 
                   if(nmismatch_loc > MAX_FLIP_COUNT) {
-                     const char *dump_filename = (p.first + ".dump").c_str();
+                     const char *dump_filename = (exePath + "/" + p.first + ".dump").c_str();
                      printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
                      std::remove(dump_filename);
                      std::ofstream outfile(dump_filename, std::ios::binary);
                      outfile.write((const char *) rrdata.data(), rrdata.size());
                      outfile.close();
                      alarm = true;
-                     continue;
+                     break;
                   }
                   printf("\n");
                }
@@ -385,6 +390,9 @@ int main(int argc, const char **argv) {
 
    run_end = std::chrono::steady_clock::now();
    printf("\nRun duration: %lld seconds\n", std::chrono::duration_cast<std::chrono::seconds>(run_end - run_begin).count());  
+
+   if(alarm)
+      running = false;
 
    listener.join();
    printf("\nBye!");
