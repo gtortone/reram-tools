@@ -318,29 +318,27 @@ int main(int argc, const char **argv) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
                      nmismatch_bit++;
                   } 
+                  printf("\n");
+
                   if(nmismatch_bit > MAX_FLIP_COUNT) {
-                     const char *dump_filename = (exePath + "/" + p.first + ".dump").c_str();
-                     printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
-                     std::remove(dump_filename);
-                     std::ofstream outfile(dump_filename, std::ios::binary);
+                     std::string dump_filename = exePath + "/" + p.first + ".dump";
+                     printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename.c_str());
+                     std::remove(dump_filename.c_str());
+                     std::ofstream outfile(dump_filename.c_str(), std::ios::binary);
                      outfile.write((const char *) rrdata.data(), rrdata.size());
                      outfile.close();
                      alarm = true;
                      break;
                   }
-                  printf("\n");
                }
             }
-
-            if(alarm)
-               continue;
 
             end = std::chrono::steady_clock::now();
 
             printf("%ld CHECK_COMPLETE %s %d %d %s %lld\n",
                std::time(nullptr), p.first.c_str(), nmismatch_loc, nmismatch_bit, input_file,
                std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
-            
+
          } else {
 
             // compare source: byte 
@@ -358,28 +356,27 @@ int main(int argc, const char **argv) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
                      nmismatch_bit++;
                   } 
+                  printf("\n");
+
                   if(nmismatch_bit > MAX_FLIP_COUNT) {
-                     const char *dump_filename = (exePath + "/" + p.first + ".dump").c_str();
-                     printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
-                     std::remove(dump_filename);
-                     std::ofstream outfile(dump_filename, std::ios::binary);
+                     std::string dump_filename = exePath + "/" + p.first + ".dump";
+                     printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename.c_str());
+                     std::remove(dump_filename.c_str());
+                     std::ofstream outfile(dump_filename.c_str(), std::ios::binary);
                      outfile.write((const char *) rrdata.data(), rrdata.size());
                      outfile.close();
                      alarm = true;
                      break;
                   }
-                  printf("\n");
                }
             }
-
-            if(alarm)
-               continue;
 
             end = std::chrono::steady_clock::now();
 
             printf("%ld CHECK_COMPLETE %s %d %d 0x%X %lld\n",
                std::time(nullptr), p.first.c_str(), nmismatch_loc, nmismatch_bit, b,
                std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+
          }
 
          // restore ReRAM original values
