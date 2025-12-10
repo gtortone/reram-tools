@@ -318,7 +318,7 @@ int main(int argc, const char **argv) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
                      nmismatch_bit++;
                   } 
-                  if(nmismatch_loc > MAX_FLIP_COUNT) {
+                  if(nmismatch_bit > MAX_FLIP_COUNT) {
                      const char *dump_filename = (exePath + "/" + p.first + ".dump").c_str();
                      printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
                      std::remove(dump_filename);
@@ -358,7 +358,7 @@ int main(int argc, const char **argv) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
                      nmismatch_bit++;
                   } 
-                  if(nmismatch_loc > MAX_FLIP_COUNT) {
+                  if(nmismatch_bit > MAX_FLIP_COUNT) {
                      const char *dump_filename = (exePath + "/" + p.first + ".dump").c_str();
                      printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
                      std::remove(dump_filename);
