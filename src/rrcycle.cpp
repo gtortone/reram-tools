@@ -49,6 +49,7 @@ int main(int argc, const char **argv) {
    std::vector<char> memblock;
    bool do_fill = true;
    std::chrono::steady_clock::time_point run_begin, run_end;
+   bool alarm = false;
    
    static const char *const usage[] = {
       s.c_str(),
@@ -156,12 +157,15 @@ int main(int argc, const char **argv) {
 
    std::thread listener(keyListener);
 
-   while(running) {
+   while(running && !alarm) {
 
       if (idx == pattern.size())
          idx = 0;
 
       uint8_t b = pattern[idx++];
+
+      auto t = std::time(nullptr);
+      printf("%ld DATETIME %s", std::time(nullptr), std::ctime(&t));
 
       for (auto &p : rr) {    // for each configured DUT
 
@@ -310,6 +314,16 @@ int main(int argc, const char **argv) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
                      nmismatch_bit++;
                   } 
+                  if(nmismatch_loc > 1024) {
+                     const char *dump_filename = (p.first + ".dump").c_str();
+                     printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
+                     std::remove(dump_filename);
+                     std::ofstream outfile(dump_filename, std::ios::binary);
+                     outfile.write((const char *) rrdata.data(), rrdata.size());
+                     outfile.close();
+                     alarm = true;
+                     continue;
+                  }
                   printf("\n");
                }
             }
@@ -337,6 +351,16 @@ int main(int argc, const char **argv) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
                      nmismatch_bit++;
                   } 
+                  if(nmismatch_loc > 1024) {
+                     const char *dump_filename = (p.first + ".dump").c_str();
+                     printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
+                     std::remove(dump_filename);
+                     std::ofstream outfile(dump_filename, std::ios::binary);
+                     outfile.write((const char *) rrdata.data(), rrdata.size());
+                     outfile.close();
+                     alarm = true;
+                     continue;
+                  }
                   printf("\n");
                }
             }
