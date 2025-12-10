@@ -17,6 +17,8 @@
 #include "config.h"
 #include "mb85as12mt.h"
 
+#define MAX_FLIP_COUNT     4096
+
 std::atomic<bool> running(true);
 
 void keyListener() {
@@ -314,7 +316,7 @@ int main(int argc, const char **argv) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
                      nmismatch_bit++;
                   } 
-                  if(nmismatch_loc > 1024) {
+                  if(nmismatch_loc > MAX_FLIP_COUNT) {
                      const char *dump_filename = (p.first + ".dump").c_str();
                      printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
                      std::remove(dump_filename);
@@ -351,7 +353,7 @@ int main(int argc, const char **argv) {
                      printf("%d:%s ", el.first, (el.second == ZERO_TO_ONE)?"0->1":"1->0");
                      nmismatch_bit++;
                   } 
-                  if(nmismatch_loc > 1024) {
+                  if(nmismatch_loc > MAX_FLIP_COUNT) {
                      const char *dump_filename = (p.first + ".dump").c_str();
                      printf("%ld DUMP_FILE %s\n", std::time(nullptr), dump_filename);
                      std::remove(dump_filename);
